@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meeting Attendance</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --brand:   #1f4e79;
+      --brand2:  #2e75b6;
+      --signin:  #1a7f37;
+      --signout: #b91c1c;
+      --bg:      #f0f4f8;
+      --card:    #ffffff;
+      --text:    #1a202c;
+      --muted:   #64748b;
+      --radius:  16px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      color: var(--text);
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    header .logo {
+      width: 56px; height: 56px;
+      background: var(--brand);
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+    header .logo svg { width: 32px; height: 32px; }
+    header h1 { font-size: 1.6rem; font-weight: 700; color: var(--brand); }
+    header p  { color: var(--muted); margin-top: 4px; font-size: 0.95rem; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 440px;
+    }
+
+    /* ── Form ── */
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #d1d5db;
+      border-radius: 10px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color .2s;
+      margin-bottom: 24px;
+    }
+    input[type="text"]:focus { border-color: var(--brand2); }
+
+    .action-label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 18px 12px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn svg { width: 28px; height: 28px; }
+
+    .btn-in  { background: var(--signin);  color: #fff; }
+    .btn-out { background: var(--signout); color: #fff; }
+
+    /* ── Success ── */
+    #success {
+      display: none;
+      text-align: center;
+      padding: 8px 0 4px;
+    }
+    #success .check-circle {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    #success .check-circle svg { width: 40px; height: 40px; }
+    #success h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
+    #success p  { color: var(--muted); font-size: 0.95rem; }
+    #success .timer {
+      display: inline-block;
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    #success .reset-now {
+      margin-top: 12px;
+      display: inline-block;
+      background: none;
+      border: 2px solid #d1d5db;
+      border-radius: 8px;
+      padding: 8px 20px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--muted);
+      transition: border-color .2s;
+    }
+    #success .reset-now:hover { border-color: var(--brand2); color: var(--brand2); }
+
+    /* ── Admin ── */
+    #adminToggle {
+      position: fixed;
+      bottom: 18px; right: 18px;
+      background: var(--brand);
+      color: #fff;
+      border: none;
+      border-radius: 50px;
+      padding: 10px 18px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      opacity: .6;
+      transition: opacity .2s;
+      z-index: 100;
+    }
+    #adminToggle:hover { opacity: 1; }
+
+    #adminPanel {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #adminPanel.open { display: flex; }
+
+    .admin-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 40px rgba(0,0,0,.2);
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .admin-card h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
+    .admin-card .sub { color: var(--muted); font-size: 0.88rem; margin-bottom: 20px; }
+
+    .admin-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .admin-btn {
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity .15s;
+    }
+    .admin-btn:hover { opacity: .85; }
+    .admin-btn.export { background: var(--brand); color: #fff; }
+    .admin-btn.clear  { background: #fee2e2; color: var(--signout); }
+    .admin-btn.close  { background: #f1f5f9; color: var(--text); }
+
+    #recordCount { font-size: 0.85rem; color: var(--muted); margin-bottom: 14px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+    th {
+      background: #f8fafc;
+      text-align: left;
+      padding: 10px 12px;
+      font-weight: 600;
+      color: var(--muted);
+      border-bottom: 2px solid #e2e8f0;
+    }
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    tr:last-child td { border-bottom: none; }
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .badge-in  { background: #dcfce7; color: #166534; }
+    .badge-out { background: #fee2e2; color: #991b1b; }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    /* ── QR Modal ── */
+    #qrModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 300;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #qrModal.open { display: flex; }
+
+    .qr-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 8px 40px rgba(0,0,0,.25);
+      padding: 36px 32px;
+      text-align: center;
+      width: 100%;
+      max-width: 360px;
+    }
+    .qr-card h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+    .qr-card .qr-sub { color: var(--muted); font-size: 0.82rem; margin-bottom: 24px; word-break: break-all; }
+    #qrBox { display: flex; justify-content: center; margin-bottom: 24px; }
+    #qrBox canvas, #qrBox img { border-radius: 8px; }
+    .qr-card .qr-url {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 20px;
+      word-break: break-all;
+    }
+    .qr-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .qr-btn {
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+    }
+    .qr-btn.print { background: var(--brand); color: #fff; }
+    .qr-btn.close  { background: #f1f5f9; color: var(--text); }
+    .qr-not-hosted {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 0.83rem;
+      color: #92400e;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+    </div>
+    <h1>Quarterly Meeting</h1>
+    <p>Please sign in or out below</p>
+  </header>
+
+  <div class="card">
+    <!-- Main form -->
+    <div id="formView">
+      <label for="nameInput">Your full name</label>
+      <input type="text" id="nameInput" placeholder="e.g. Jane Smith" autocomplete="off" autocorrect="off" spellcheck="false" />
+
+      <div class="action-label">What are you doing?</div>
+      <div class="btn-row">
+        <button class="btn btn-in"  onclick="submit('Sign In')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          Sign In
+        </button>
+        <button class="btn btn-out" onclick="submit('Sign Out')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Sign Out
+        </button>
+      </div>
+    </div>
+
+    <!-- Success state -->
+    <div id="success">
+      <div class="check-circle" id="successCircle"></div>
+      <h2 id="successMsg"></h2>
+      <p id="successSub"></p>
+      <div class="timer" id="timerTxt"></div><br/>
+      <button class="reset-now" onclick="resetForm()">Done — next person</button>
+    </div>
+  </div>
+
+  <!-- Admin toggle -->
+  <button id="adminToggle" onclick="openAdmin()">⚙ Admin</button>
+
+  <!-- QR Modal -->
+  <div id="qrModal">
+    <div class="qr-card">
+      <h2>Scan to Attend</h2>
+      <p class="qr-sub" id="qrSubText"></p>
+      <div id="qrBox"></div>
+      <div class="qr-actions">
+        <button class="qr-btn print" onclick="printQR()">🖨 Print QR</button>
+        <button class="qr-btn close" onclick="closeQR()">✕ Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin panel -->
+  <div id="adminPanel">
+    <div class="admin-card">
+      <h2>Attendance Log</h2>
+      <p class="sub">All sign-ins and sign-outs recorded this session.</p>
+      <div id="recordCount"></div>
+      <div class="admin-actions">
+        <button class="admin-btn export" onclick="exportCSV()">⬇ Export CSV</button>
+        <button class="admin-btn export" onclick="openQR()" style="background:#2e75b6">⊞ Show QR Code</button>
+        <button class="admin-btn clear"  onclick="clearData()">🗑 Clear all data</button>
+        <button class="admin-btn close"  onclick="closeAdmin()">✕ Close</button>
+      </div>
+      <div id="tableWrap"></div>
+    </div>
+  </div>
+
+<script>
+  const STORAGE_KEY = 'meeting_attendance_v1';
+  let countdown;
+
+  // ── Load records ──────────────────────────────────────────────────────────
+  function loadRecords() {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+    catch { return []; }
+  }
+  function saveRecords(records) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  }
+
+  // ── Submit ────────────────────────────────────────────────────────────────
+  function submit(action) {
+    const nameInput = document.getElementById('nameInput');
+    const name = nameInput.value.trim();
+    if (!name) {
+      nameInput.focus();
+      nameInput.style.borderColor = '#ef4444';
+      setTimeout(() => nameInput.style.borderColor = '', 1200);
+      return;
+    }
+
+    const now   = new Date();
+    const entry = {
+      name,
+      action,
+      timestamp: now.toISOString(),
+      date: now.toLocaleDateString(),
+      time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    const records = loadRecords();
+    records.push(entry);
+    saveRecords(records);
+
+    showSuccess(name, action);
+  }
+
+  // ── Success screen ────────────────────────────────────────────────────────
+  function showSuccess(name, action) {
+    const isIn  = action === 'Sign In';
+    const color = isIn ? '#1a7f37' : '#b91c1c';
+    const icon  = isIn
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+    document.getElementById('formView').style.display    = 'none';
+    const success = document.getElementById('success');
+    success.style.display = 'block';
+
+    const circle = document.getElementById('successCircle');
+    circle.style.background = color;
+    circle.innerHTML = icon;
+
+    document.getElementById('successMsg').textContent = action === 'Sign In'
+      ? `Signed in — welcome, ${name.split(' ')[0]}!`
+      : `Signed out — see you, ${name.split(' ')[0]}!`;
+    document.getElementById('successSub').textContent =
+      `Recorded at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+    let secs = 6;
+    clearInterval(countdown);
+    updateTimer(secs);
+    countdown = setInterval(() => {
+      secs--;
+      if (secs <= 0) { clearInterval(countdown); resetForm(); }
+      else updateTimer(secs);
+    }, 1000);
+  }
+
+  function updateTimer(s) {
+    document.getElementById('timerTxt').textContent = `Resetting in ${s}s…`;
+  }
+
+  function resetForm() {
+    clearInterval(countdown);
+    document.getElementById('nameInput').value = '';
+    document.getElementById('nameInput').style.borderColor = '';
+    document.getElementById('success').style.display  = 'none';
+    document.getElementById('formView').style.display = 'block';
+    document.getElementById('nameInput').focus();
+  }
+
+  // ── Admin ─────────────────────────────────────────────────────────────────
+  function openAdmin() {
+    renderTable();
+    document.getElementById('adminPanel').classList.add('open');
+  }
+  function closeAdmin() {
+    document.getElementById('adminPanel').classList.remove('open');
+  }
+  document.getElementById('adminPanel').addEventListener('click', function(e) {
+    if (e.target === this) closeAdmin();
+  });
+
+  function renderTable() {
+    const records = loadRecords();
+    document.getElementById('recordCount').textContent =
+      `${records.length} record${records.length !== 1 ? 's' : ''} logged`;
+
+    const wrap = document.getElementById('tableWrap');
+    if (records.length === 0) {
+      wrap.innerHTML = '<div class="empty-state">No records yet — waiting for the first sign-in.</div>';
+      return;
+    }
+
+    const sorted = [...records].reverse(); // newest first
+    wrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Action</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${sorted.map((r, i) => `
+            <tr>
+              <td style="color:var(--muted)">${records.length - i}</td>
+              <td>${escHtml(r.name)}</td>
+              <td><span class="badge ${r.action === 'Sign In' ? 'badge-in' : 'badge-out'}">${escHtml(r.action)}</span></td>
+              <td>${escHtml(r.time)}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>`;
+  }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Export CSV ────────────────────────────────────────────────────────────
+  function exportCSV() {
+    const records = loadRecords();
+    if (records.length === 0) { alert('No records to export yet.'); return; }
+
+    const header = ['#', 'Name', 'Action', 'Date', 'Time', 'Timestamp (ISO)'];
+    const rows   = records.map((r, i) =>
+      [i + 1, `"${r.name.replace(/"/g,'""')}"`, r.action, r.date, r.time, r.timestamp]
+    );
+
+    const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `attendance-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Clear ─────────────────────────────────────────────────────────────────
+  function clearData() {
+    if (!confirm(`Delete ALL ${loadRecords().length} record(s)? This cannot be undone.`)) return;
+    localStorage.removeItem(STORAGE_KEY);
+    renderTable();
+  }
+
+  // ── QR Code ───────────────────────────────────────────────────────────────
+  let qrInstance = null;
+
+  function openQR() {
+    const url = window.location.href;
+    const isLocal = url.startsWith('file://') || url.startsWith('blob:');
+    const box = document.getElementById('qrBox');
+    const sub = document.getElementById('qrSubText');
+
+    box.innerHTML = '';
+    if (qrInstance) { qrInstance = null; }
+
+    if (isLocal) {
+      sub.textContent = '';
+      box.innerHTML = `
+        <div class="qr-not-hosted">
+          ⚠️ The page is open as a local file — QR codes only work once the page is hosted online.<br><br>
+          Upload to <strong>netlify.com/drop</strong>, then re-open this page from the live URL and click <em>Show QR Code</em> again.
+        </div>`;
+    } else {
+      sub.textContent = url;
+      qrInstance = new QRCode(box, {
+        text: url,
+        width: 220,
+        height: 220,
+        colorDark: '#1f4e79',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    }
+
+    document.getElementById('qrModal').classList.add('open');
+  }
+
+  function closeQR() {
+    document.getElementById('qrModal').classList.remove('open');
+  }
+
+  document.getElementById('qrModal').addEventListener('click', function(e) {
+    if (e.target === this) closeQR();
+  });
+
+  function printQR() {
+    const url = window.location.href;
+    const qrBox = document.getElementById('qrBox');
+    const canvas = qrBox.querySelector('canvas');
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL('image/png');
+
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <!DOCTYPE html><html><head>
+      <title>Meeting Attendance QR Code</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+               display:flex; flex-direction:column; align-items:center;
+               justify-content:center; min-height:100vh; margin:0; padding:32px; text-align:center; }
+        h1 { font-size: 2rem; color: #1f4e79; margin-bottom: 8px; }
+        p  { color: #64748b; margin-bottom: 32px; font-size: 1.1rem; }
+        img { border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.1); }
+        .url { margin-top: 24px; font-size: 0.8rem; color: #94a3b8; word-break:break-all; max-width:400px; }
+        @media print { body { padding: 0; } }
+      </style>
+      </head><body>
+        <h1>📋 Quarterly Meeting</h1>
+        <p>Scan to sign in or sign out</p>
+        <img src="${dataUrl}" width="260" height="260" />
+        <div class="url">${escHtml(url)}</div>
+        <script>window.onload=()=>window.print()<\/script>
+      </body></html>`);
+    win.document.close();
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  document.getElementById('nameInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.querySelector('.btn-in').focus();
+  });
+</script>
+</body>
+</html>
