@@ -7,387 +7,238 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --charcoal:  #3c3b3b;
-      --charcoal2: #545252;
-      --cyan:      #29b8d8;
-      --cyan2:     #1a9cbd;
-      --cyan-pale: #e0f7fc;
-      --bg:        #1e1e1e;
-      --card:      #ffffff;
-      --text:      #1a202c;
-      --muted:     #64748b;
-      --radius:    16px;
-      --signin:    #1a7f37;
-      --signout:   #b91c1c;
+      --charcoal: #3c3b3b; --charcoal2: #545252;
+      --cyan: #29b8d8;     --cyan2: #1a9cbd;
+      --card: #ffffff;     --text: #1a202c; --muted: #64748b;
+      --radius: 16px;      --green: #1a7f37; --red: #b91c1c;
     }
 
-    /* ── Body & background ── */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 16px 80px;
-      color: var(--text);
-      position: relative;
-      overflow-x: hidden;
-      background: #1a1a1a;
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 24px 16px 80px; color: var(--text);
+      position: relative; overflow-x: hidden; background: #1a1a1a;
     }
-
-    /* Full-bleed photo background */
     body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
+      content: ''; position: fixed; inset: 0; z-index: 0;
       background:
-        linear-gradient(
-          135deg,
-          rgba(10,10,10,.82) 0%,
-          rgba(28,40,45,.75) 50%,
-          rgba(10,10,10,.88) 100%
-        ),
-        url('bg.jpg') center / cover no-repeat;
-      z-index: 0;
+        linear-gradient(135deg,rgba(10,10,10,.82) 0%,rgba(28,40,45,.75) 50%,rgba(10,10,10,.88) 100%),
+        url('bg.jpg') center/cover no-repeat;
     }
-
-    /* Blueprint grid overlay */
     body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
+      content: ''; position: fixed; inset: 0; z-index: 0;
       background-image:
-        linear-gradient(rgba(41,184,216,.07) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(41,184,216,.07) 1px, transparent 1px);
+        linear-gradient(rgba(41,184,216,.07) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(41,184,216,.07) 1px,transparent 1px);
       background-size: 48px 48px;
-      z-index: 0;
       animation: gridShift 25s linear infinite;
     }
+    @keyframes gridShift { to { background-position: 48px 48px, 48px 48px; } }
 
-    @keyframes gridShift {
-      0%   { background-position: 0 0, 0 0; }
-      100% { background-position: 48px 48px, 48px 48px; }
-    }
+    .blob { position:fixed;border-radius:50%;filter:blur(90px);opacity:.2;z-index:0;pointer-events:none; }
+    .blob-1{width:500px;height:500px;background:var(--cyan);top:-150px;right:-120px;}
+    .blob-2{width:400px;height:400px;background:var(--charcoal2);bottom:-100px;left:-100px;}
+    .blob-3{width:280px;height:280px;background:var(--cyan2);bottom:30%;right:5%;}
+    .accent-strip{position:fixed;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--charcoal),var(--cyan),var(--charcoal));z-index:10;}
 
-    /* Glowing accent blobs */
-    .blob {
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(90px);
-      opacity: .22;
-      z-index: 0;
-      pointer-events: none;
-    }
-    .blob-1 { width: 500px; height: 500px; background: var(--cyan);      top: -150px; right: -120px; }
-    .blob-2 { width: 400px; height: 400px; background: var(--charcoal2); bottom: -100px; left: -100px; }
-    .blob-3 { width: 280px; height: 280px; background: var(--cyan2);     bottom: 30%;  right: 5%; }
+    header,.card,#adminToggle{position:relative;z-index:1;}
 
-    /* Diagonal accent strip */
-    .accent-strip {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 6px;
-      background: linear-gradient(90deg, var(--charcoal), var(--cyan), var(--charcoal));
-      z-index: 10;
-    }
+    /* Header */
+    header{text-align:center;margin-bottom:24px;}
+    .logo-wrap{margin-bottom:12px;}
+    .logo-wrap img{height:64px;object-fit:contain;filter:drop-shadow(0 4px 16px rgba(41,184,216,.5));}
+    .logo-fallback{display:none;flex-direction:column;align-items:center;}
+    .logo-fallback strong{font-size:1.8rem;font-weight:900;letter-spacing:3px;background:linear-gradient(90deg,#fff 60%,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .logo-fallback span{font-size:.65rem;letter-spacing:3px;color:var(--cyan);text-transform:uppercase;font-weight:600;}
+    header h2{font-size:.9rem;font-weight:400;color:rgba(255,255,255,.5);letter-spacing:1.5px;text-transform:uppercase;margin-top:6px;}
+    .meeting-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(41,184,216,.12);border:1px solid rgba(41,184,216,.3);border-radius:50px;padding:5px 14px;font-size:.78rem;font-weight:600;color:var(--cyan);margin-top:8px;}
+    .meeting-tag::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
 
-    /* Everything above bg */
-    header, .card, #adminToggle { position: relative; z-index: 1; }
+    /* Card */
+    .card{background:rgba(255,255,255,.97);backdrop-filter:blur(12px);border-radius:var(--radius);box-shadow:0 8px 40px rgba(0,0,0,.4),0 0 0 1px rgba(41,184,216,.15);padding:28px 24px;width:100%;max-width:420px;}
 
-    /* ── Header ── */
-    header {
-      text-align: center;
-      margin-bottom: 28px;
-    }
-    .logo-wrap {
-      margin-bottom: 16px;
-    }
-    .logo-wrap img {
-      height: 70px;
-      object-fit: contain;
-      filter: drop-shadow(0 4px 16px rgba(41,184,216,.4));
-    }
-    /* Fallback if logo.png not yet uploaded */
-    .logo-fallback {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .logo-fallback .triangle {
-      width: 0; height: 0;
-      border-left: 22px solid transparent;
-      border-right: 22px solid transparent;
-      border-bottom: 38px solid var(--charcoal2);
-      position: relative;
-    }
-    .logo-fallback .company-name { text-align: left; }
-    .logo-fallback .company-name strong {
-      display: block; font-size: 1.6rem; font-weight: 900;
-      letter-spacing: 2px;
-      background: linear-gradient(90deg, #fff 60%, var(--cyan));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .logo-fallback .company-name span {
-      font-size: 0.65rem; letter-spacing: 3px; color: var(--cyan);
-      text-transform: uppercase; font-weight: 600;
-    }
+    /* Status screens */
+    .status-screen{text-align:center;padding:8px 0;}
+    .status-icon{width:68px;height:68px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;}
+    .status-icon svg{width:36px;height:36px;}
+    .status-screen h2{font-size:1.25rem;font-weight:700;margin-bottom:8px;}
+    .status-screen p{color:var(--muted);font-size:.88rem;line-height:1.5;}
+    .window-info{display:inline-block;margin-top:14px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:8px 16px;font-size:.8rem;color:#0369a1;font-weight:600;}
 
-    header h2 {
-      font-size: 1rem; font-weight: 400;
-      color: rgba(255,255,255,.55);
-      letter-spacing: 1px;
-      margin-top: 6px;
-      text-transform: uppercase;
-    }
+    /* Mode header strip */
+    .mode-strip{border-radius:10px;padding:12px 14px;margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+    .mode-strip.signin {background:#dcfce7;border:1.5px solid #86efac;}
+    .mode-strip.signout{background:#fee2e2;border:1.5px solid #fca5a5;}
+    .mode-strip .mode-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .mode-strip.signin  .mode-icon{background:var(--green);}
+    .mode-strip.signout .mode-icon{background:var(--red);}
+    .mode-strip .mode-icon svg{width:18px;height:18px;}
+    .mode-strip .mode-text strong{display:block;font-size:.95rem;}
+    .mode-strip.signin  .mode-text strong{color:#166534;}
+    .mode-strip.signout .mode-text strong{color:#991b1b;}
+    .mode-strip .mode-text span{font-size:.75rem;color:var(--muted);}
 
-    /* ── Meeting tag ── */
-    .meeting-tag {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: rgba(41,184,216,.12);
-      border: 1px solid rgba(41,184,216,.3);
-      border-radius: 50px;
-      padding: 6px 16px;
-      font-size: 0.8rem; font-weight: 600;
-      color: var(--cyan);
-      letter-spacing: .5px;
-      margin-top: 10px;
-    }
-    .meeting-tag::before {
-      content: '';
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--cyan);
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50%       { opacity: .4; transform: scale(.7); }
-    }
+    /* Search input */
+    .search-wrap{position:relative;margin-bottom:10px;}
+    .search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--muted);pointer-events:none;}
+    #searchInput{width:100%;padding:12px 12px 12px 38px;border:2px solid #d1d5db;border-radius:10px;font-size:1rem;outline:none;transition:border-color .2s;}
+    #searchInput:focus{border-color:var(--cyan);}
 
-    /* ── Card ── */
-    .card {
-      background: rgba(255,255,255,.97);
-      backdrop-filter: blur(12px);
-      border-radius: var(--radius);
-      box-shadow: 0 8px 40px rgba(0,0,0,.4), 0 0 0 1px rgba(41,184,216,.15);
-      padding: 32px 28px;
-      width: 100%; max-width: 440px;
-    }
+    /* Name list */
+    #nameList{max-height:240px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:18px;}
+    .name-item{padding:13px 16px;cursor:pointer;font-size:.95rem;font-weight:500;border-bottom:1px solid #f1f5f9;transition:background .1s,color .1s;display:flex;align-items:center;gap:10px;}
+    .name-item:last-child{border-bottom:none;}
+    .name-item:hover{background:#f0f9ff;}
+    .name-item.selected{background:var(--cyan);color:#fff;font-weight:700;}
+    .name-item .av{width:30px;height:30px;border-radius:50%;background:var(--charcoal);color:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;}
+    .name-item.selected .av{background:rgba(255,255,255,.25);color:#fff;}
+    .no-results{padding:20px;text-align:center;color:var(--muted);font-size:.88rem;}
 
-    /* ── Personal badge ── */
-    .personal-badge {
-      display: flex; align-items: center; gap: 10px;
-      background: #e0f7fc; border: 1.5px solid #80deea;
-      border-radius: 10px; padding: 12px 14px; margin-bottom: 20px;
-    }
-    .personal-badge .avatar {
-      width: 38px; height: 38px; border-radius: 50%;
-      background: var(--charcoal); color: var(--cyan);
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 700; font-size: 1rem; flex-shrink: 0;
-    }
-    .personal-badge .info strong { display: block; font-size: 1rem; color: var(--charcoal); }
-    .personal-badge .info span   { font-size: 0.78rem; color: var(--muted); }
+    /* Action button */
+    .btn{width:100%;padding:16px;border:none;border-radius:12px;font-size:1.05rem;font-weight:700;cursor:pointer;transition:opacity .15s,transform .12s,box-shadow .15s;display:flex;align-items:center;justify-content:center;gap:10px;}
+    .btn:hover{opacity:.92;transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.18);}
+    .btn:active{transform:scale(.97);}
+    .btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none;}
+    .btn svg{width:22px;height:22px;}
+    .btn-in {background:linear-gradient(135deg,#1a7f37,#22a34a);color:#fff;}
+    .btn-out{background:linear-gradient(135deg,#b91c1c,#dc2626);color:#fff;}
+    .window-countdown{font-size:.75rem;color:var(--red);text-align:center;margin-bottom:12px;font-weight:600;}
 
-    /* ── Form ── */
-    label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; color: var(--text); }
-    input[type="text"] {
-      width: 100%; padding: 14px 16px;
-      border: 2px solid #d1d5db; border-radius: 10px;
-      font-size: 1rem; outline: none; transition: border-color .2s; margin-bottom: 24px;
-    }
-    input[type="text"]:focus    { border-color: var(--cyan); }
-    input[type="text"]:disabled { background: #f8fafc; color: var(--muted); border-color: #e2e8f0; cursor: not-allowed; }
+    /* Success */
+    #success{display:none;text-align:center;padding:8px 0 4px;}
+    #success .check-circle{width:72px;height:72px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px;}
+    #success .check-circle svg{width:38px;height:38px;}
+    #success h2{font-size:1.35rem;font-weight:700;margin-bottom:6px;}
+    #success p{color:var(--muted);font-size:.9rem;}
+    #success .timer{display:inline-block;margin-top:18px;font-size:.82rem;color:var(--muted);}
+    #success .reset-now{margin-top:10px;display:inline-block;background:none;border:2px solid #d1d5db;border-radius:8px;padding:7px 18px;cursor:pointer;font-size:.88rem;color:var(--muted);transition:border-color .2s;}
+    #success .reset-now:hover{border-color:var(--cyan);color:var(--cyan2);}
 
-    .action-label { font-weight: 600; font-size: 0.9rem; margin-bottom: 12px; color: var(--text); }
-    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    /* Admin toggle */
+    #adminToggle{position:fixed;bottom:18px;right:18px;background:var(--charcoal);color:var(--cyan);border:1px solid rgba(41,184,216,.3);border-radius:50px;padding:10px 18px;font-size:.8rem;font-weight:600;cursor:pointer;opacity:.7;transition:opacity .2s;z-index:100;}
+    #adminToggle:hover{opacity:1;}
 
-    .btn {
-      padding: 18px 12px; border: none; border-radius: 12px;
-      font-size: 1.05rem; font-weight: 700; cursor: pointer;
-      transition: opacity .15s, transform .12s, box-shadow .15s;
-      display: flex; flex-direction: column; align-items: center; gap: 6px;
-    }
-    .btn:hover  { opacity: .92; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.18); }
-    .btn:active { transform: scale(.97); }
-    .btn:disabled { opacity: .4; cursor: not-allowed; }
-    .btn svg { width: 28px; height: 28px; }
-    .btn-in  { background: linear-gradient(135deg, #1a7f37, #22a34a); color: #fff; }
-    .btn-out { background: linear-gradient(135deg, #b91c1c, #dc2626); color: #fff; }
+    /* Overlay */
+    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;padding:16px;}
+    .overlay.open{display:flex;}
+    .admin-card{background:var(--card);border-radius:var(--radius);box-shadow:0 8px 40px rgba(0,0,0,.3);padding:28px 24px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;}
+    .admin-card h2{font-size:1.15rem;font-weight:700;margin-bottom:4px;}
+    .admin-card .sub{color:var(--muted);font-size:.85rem;margin-bottom:18px;}
 
-    /* ── Success ── */
-    #success { display: none; text-align: center; padding: 8px 0 4px; }
-    #success .check-circle {
-      width: 72px; height: 72px; border-radius: 50%;
-      display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;
-    }
-    #success .check-circle svg { width: 40px; height: 40px; }
-    #success h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
-    #success p  { color: var(--muted); font-size: 0.95rem; }
-    #success .timer { display: inline-block; margin-top: 20px; font-size: 0.85rem; color: var(--muted); }
-    #success .reset-now {
-      margin-top: 12px; display: inline-block; background: none;
-      border: 2px solid #d1d5db; border-radius: 8px; padding: 8px 20px;
-      cursor: pointer; font-size: 0.9rem; color: var(--muted); transition: border-color .2s;
-    }
-    #success .reset-now:hover { border-color: var(--cyan); color: var(--cyan2); }
+    /* Tabs */
+    .tab-row{display:flex;gap:4px;margin-bottom:18px;border-bottom:2px solid #e2e8f0;}
+    .tab-btn{padding:7px 14px;border:none;background:none;font-size:.84rem;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;}
+    .tab-btn.active{color:var(--charcoal);border-bottom-color:var(--cyan);}
+    .tab-pane{display:none;} .tab-pane.active{display:block;}
 
-    /* ── Admin toggle ── */
-    #adminToggle {
-      position: fixed; bottom: 18px; right: 18px;
-      background: var(--charcoal); color: var(--cyan);
-      border: 1px solid rgba(41,184,216,.3);
-      border-radius: 50px; padding: 10px 18px;
-      font-size: 0.8rem; font-weight: 600; cursor: pointer;
-      opacity: .7; transition: opacity .2s; z-index: 100;
-    }
-    #adminToggle:hover { opacity: 1; }
+    /* Admin buttons */
+    .admin-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+    .admin-btn{padding:9px 16px;border-radius:8px;font-size:.85rem;font-weight:600;cursor:pointer;border:none;transition:opacity .15s;}
+    .admin-btn:hover{opacity:.85;}
+    .admin-btn.primary{background:var(--charcoal);color:#fff;}
+    .admin-btn.cyan{background:var(--cyan);color:#fff;}
+    .admin-btn.clear{background:#fee2e2;color:var(--red);}
+    .admin-btn.ghost{background:#f1f5f9;color:var(--text);}
 
-    /* ── Overlays ── */
-    .overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,.6); z-index: 200;
-      align-items: center; justify-content: center; padding: 16px;
-    }
-    .overlay.open { display: flex; }
+    /* Log table */
+    #recordCount{font-size:.82rem;color:var(--muted);margin-bottom:12px;}
+    table{width:100%;border-collapse:collapse;font-size:.85rem;}
+    th{background:#f8fafc;text-align:left;padding:9px 12px;font-weight:600;color:var(--muted);border-bottom:2px solid #e2e8f0;}
+    td{padding:9px 12px;border-bottom:1px solid #f1f5f9;}
+    tr:last-child td{border-bottom:none;}
+    .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.75rem;font-weight:600;}
+    .badge-in{background:#dcfce7;color:#166534;} .badge-out{background:#fee2e2;color:#991b1b;}
+    .empty-state{text-align:center;padding:28px 0;color:var(--muted);font-size:.9rem;}
 
-    /* ── Admin card ── */
-    .admin-card {
-      background: var(--card); border-radius: var(--radius);
-      box-shadow: 0 8px 40px rgba(0,0,0,.3);
-      padding: 28px 24px; width: 100%; max-width: 620px;
-      max-height: 90vh; overflow-y: auto;
-    }
-    .admin-card h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
-    .admin-card .sub { color: var(--muted); font-size: 0.88rem; margin-bottom: 20px; }
+    /* Setup form */
+    label.lbl{display:block;font-weight:600;font-size:.85rem;margin-bottom:6px;color:var(--text);}
+    textarea{width:100%;padding:10px 12px;border:2px solid #d1d5db;border-radius:10px;font-size:.88rem;resize:vertical;min-height:100px;outline:none;font-family:inherit;line-height:1.6;}
+    textarea:focus{border-color:var(--cyan);}
+    .time-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0;}
+    .time-row input[type="time"]{width:100%;padding:10px 12px;border:2px solid #d1d5db;border-radius:10px;font-size:.9rem;outline:none;}
+    .time-row input[type="time"]:focus{border-color:var(--cyan);}
+    .setup-hint{font-size:.78rem;color:var(--muted);margin-bottom:14px;}
 
-    /* ── Tabs ── */
-    .tab-row { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
-    .tab-btn {
-      padding: 8px 16px; border: none; background: none;
-      font-size: 0.88rem; font-weight: 600; cursor: pointer;
-      color: var(--muted); border-bottom: 2px solid transparent;
-      margin-bottom: -2px; transition: color .15s, border-color .15s;
-    }
-    .tab-btn.active { color: var(--charcoal); border-bottom-color: var(--cyan); }
-    .tab-pane { display: none; }
-    .tab-pane.active { display: block; }
-
-    /* ── Buttons (admin) ── */
-    .admin-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
-    .admin-btn {
-      padding: 9px 18px; border-radius: 8px; font-size: 0.88rem;
-      font-weight: 600; cursor: pointer; border: none; transition: opacity .15s;
-    }
-    .admin-btn:hover { opacity: .85; }
-    .admin-btn.primary { background: var(--charcoal); color: #fff; }
-    .admin-btn.cyan    { background: var(--cyan);     color: #fff; }
-    .admin-btn.clear   { background: #fee2e2;          color: var(--signout); }
-    .admin-btn.ghost   { background: #f1f5f9;          color: var(--text); }
-
-    /* ── Log table ── */
-    #recordCount { font-size: 0.85rem; color: var(--muted); margin-bottom: 14px; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-    th {
-      background: #f8fafc; text-align: left; padding: 10px 12px;
-      font-weight: 600; color: var(--muted); border-bottom: 2px solid #e2e8f0;
-    }
-    td { padding: 10px 12px; border-bottom: 1px solid #f1f5f9; }
-    tr:last-child td { border-bottom: none; }
-    .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
-    .badge-in  { background: #dcfce7; color: #166534; }
-    .badge-out { background: #fee2e2; color: #991b1b; }
-    .empty-state { text-align: center; padding: 32px 0; color: var(--muted); font-size: 0.95rem; }
-
-    /* ── Staff setup ── */
-    textarea {
-      width: 100%; padding: 12px 14px; border: 2px solid #d1d5db; border-radius: 10px;
-      font-size: 0.9rem; resize: vertical; min-height: 120px; outline: none;
-      font-family: inherit; line-height: 1.6;
-    }
-    textarea:focus { border-color: var(--cyan); }
-    .setup-hint { font-size: 0.8rem; color: var(--muted); margin: 8px 0 16px; }
-
-    /* ── Staff QR grid ── */
-    .staff-qr-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap: 16px; margin-top: 20px;
-    }
-    .staff-qr-item {
-      background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
-      padding: 14px 10px; text-align: center;
-      display: flex; flex-direction: column; align-items: center; gap: 8px;
-    }
-    .staff-qr-item .sname { font-size: 0.78rem; font-weight: 600; color: var(--text); word-break: break-word; line-height: 1.3; }
-    .staff-qr-item canvas, .staff-qr-item img { border-radius: 4px; }
-
-    /* ── QR (shared) ── */
-    .qr-not-hosted {
-      background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px;
-      padding: 14px 16px; font-size: 0.83rem; color: #92400e; line-height: 1.5;
-    }
+    /* QR display cards */
+    .qr-display{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;}
+    .qr-box{flex:1;min-width:160px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;}
+    .qr-box.in-box {border-top:3px solid var(--green);}
+    .qr-box.out-box{border-top:3px solid var(--red);}
+    .qr-box canvas,.qr-box img{border-radius:6px;}
+    .qr-box .qr-title{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;}
+    .qr-box .qr-title.in {color:var(--green);}
+    .qr-box .qr-title.out{color:var(--red);}
+    .qr-box .qr-note{font-size:.72rem;color:var(--muted);}
+    .qr-not-hosted{background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;font-size:.82rem;color:#92400e;line-height:1.5;}
+    .info-box{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;font-size:.8rem;color:#1e40af;line-height:1.5;margin-bottom:14px;}
+    .info-box strong{display:block;margin-bottom:4px;}
+    .window-strip{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:9px 12px;font-size:.8rem;color:#166534;margin-bottom:14px;display:none;}
   </style>
 </head>
 <body>
   <div class="accent-strip"></div>
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
-  <div class="blob blob-3"></div>
+  <div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div>
 
   <header>
     <div class="logo-wrap">
-      <!-- Upload logo.png to your GitHub repo next to index.html -->
       <img src="logo.png" alt="Excel Services"
-           onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='inline-flex';" />
-      <span class="logo-fallback" id="logoFallback" style="display:none">
-        <span class="triangle"></span>
-        <span class="company-name">
-          <strong>EXCEL</strong>
-          <span>Design Build + MEP</span>
-        </span>
-      </span>
+           onerror="this.style.display='none';document.getElementById('logoFallback').style.display='flex';" />
+      <div class="logo-fallback" id="logoFallback">
+        <strong>EXCEL</strong><span>Design Build + MEP</span>
+      </div>
     </div>
     <h2>Quarterly Meeting</h2>
     <div class="meeting-tag">Attendance Check-In</div>
   </header>
 
   <div class="card">
+
+    <!-- Too early -->
+    <div id="viewTooEarly" class="status-screen" style="display:none">
+      <div class="status-icon" style="background:#fef9c3">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#854d0e" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+      </div>
+      <h2 style="color:#854d0e">Not yet — stay in the meeting!</h2>
+      <p>Sign-out isn't available yet. The window opens soon.</p>
+      <div class="window-info" id="tooEarlyInfo"></div>
+    </div>
+
+    <!-- Expired -->
+    <div id="viewExpired" class="status-screen" style="display:none">
+      <div class="status-icon" style="background:#fee2e2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#991b1b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+      </div>
+      <h2 style="color:#991b1b">Sign-out window closed</h2>
+      <p>The sign-out window has passed. Please see your manager to record your departure.</p>
+    </div>
+
+    <!-- Main form -->
     <div id="formView">
-      <!-- Personal badge -->
-      <div id="personalBadge" class="personal-badge" style="display:none">
-        <div class="avatar" id="avatarInitials"></div>
-        <div class="info">
-          <strong id="badgeName"></strong>
-          <span>Your personal sign-in link 🔒</span>
-        </div>
+      <div id="modeStrip" class="mode-strip" style="display:none"></div>
+
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Search your name…" autocomplete="off" autocorrect="off" spellcheck="false" />
       </div>
 
-      <label for="nameInput">Your full name</label>
-      <input type="text" id="nameInput" placeholder="e.g. Jane Smith"
-             autocomplete="off" autocorrect="off" spellcheck="false" />
+      <div id="nameList"></div>
 
-      <div class="action-label">What are you doing?</div>
-      <div class="btn-row">
-        <button class="btn btn-in" onclick="doSubmit('Sign In')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-            <polyline points="10 17 15 12 10 7"/>
-            <line x1="15" y1="12" x2="3" y2="12"/>
-          </svg>
-          Sign In
-        </button>
-        <button class="btn btn-out" onclick="doSubmit('Sign Out')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-          Sign Out
-        </button>
-      </div>
+      <div id="windowCountdown" class="window-countdown" style="display:none"></div>
+
+      <button class="btn" id="actionBtn" disabled onclick="doSubmit()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="actionBtnIcon"></svg>
+        <span id="actionBtnLabel">Select your name first</span>
+      </button>
     </div>
 
     <!-- Success -->
@@ -398,23 +249,22 @@
       <div class="timer" id="timerTxt"></div><br/>
       <button class="reset-now" onclick="resetForm()">Done — next person</button>
     </div>
+
   </div>
 
   <button id="adminToggle" onclick="openAdmin()">⚙ Admin</button>
 
-  <!-- ── Admin Panel ── -->
+  <!-- ADMIN PANEL -->
   <div id="adminPanel" class="overlay">
     <div class="admin-card">
       <h2>Admin Panel</h2>
       <p class="sub">Excel Services — Quarterly Meeting</p>
-
       <div class="tab-row">
-        <button class="tab-btn active" onclick="switchTab('log')">📋 Attendance Log</button>
-        <button class="tab-btn"        onclick="switchTab('staff')">👥 Staff QR Codes</button>
-        <button class="tab-btn"        onclick="switchTab('qr')">⊞ Shared QR</button>
+        <button class="tab-btn active" onclick="switchTab('log')">📋 Log</button>
+        <button class="tab-btn"        onclick="switchTab('setup')">⚙ Setup QRs</button>
       </div>
 
-      <!-- Log -->
+      <!-- LOG -->
       <div id="tab-log" class="tab-pane active">
         <div id="recordCount"></div>
         <div class="admin-actions">
@@ -425,341 +275,398 @@
         <div id="tableWrap"></div>
       </div>
 
-      <!-- Staff QRs -->
-      <div id="tab-staff" class="tab-pane">
-        <p style="font-size:.88rem;color:var(--muted);margin-bottom:12px">
-          Enter one staff name per line. Each person gets a unique QR code locked to their name.
-        </p>
-        <label for="staffList">Staff names</label>
-        <textarea id="staffList" placeholder="Jane Smith&#10;John Doe&#10;Alice Johnson&#10;Bob Williams"></textarea>
-        <p class="setup-hint">One name per line. Your list is saved automatically.</p>
-        <div class="admin-actions">
-          <button class="admin-btn primary" onclick="generateStaffQRs()">⊞ Generate QR Codes</button>
-          <button class="admin-btn cyan"    onclick="printAllQRs()" id="printAllBtn" style="display:none">🖨 Print All</button>
-          <button class="admin-btn ghost"   onclick="closeAdmin()">✕ Close</button>
+      <!-- SETUP -->
+      <div id="tab-setup" class="tab-pane">
+        <div class="info-box">
+          <strong>📱 How it works — just 2 QR codes for everyone</strong>
+          Print one Sign-In QR and one Sign-Out QR (time-locked). Staff scan the relevant one, pick their name from the list, and tap the button. Done.
         </div>
-        <div id="staffQrGrid" class="staff-qr-grid"></div>
-      </div>
 
-      <!-- Shared QR -->
-      <div id="tab-qr" class="tab-pane">
-        <p style="font-size:.88rem;color:var(--muted);margin-bottom:20px">
-          Shared QR for the attendance page — useful for guests or as a backup.
-        </p>
+        <label class="lbl" for="staffList">Staff names <span style="font-weight:400;color:var(--muted)">(one per line)</span></label>
+        <textarea id="staffList" placeholder="Jane Smith&#10;John Doe&#10;Alice Johnson&#10;Bob Williams"></textarea>
+        <p class="setup-hint">Your list is saved automatically.</p>
+
+        <div class="time-row">
+          <div>
+            <label class="lbl" for="soFrom">Sign-out opens at</label>
+            <input type="time" id="soFrom" value="15:30" />
+          </div>
+          <div>
+            <label class="lbl" for="soTo">Sign-out closes at</label>
+            <input type="time" id="soTo" value="16:00" />
+          </div>
+        </div>
+
+        <div class="window-strip" id="windowStrip"></div>
+
         <div class="admin-actions">
-          <button class="admin-btn primary" onclick="renderSharedQR()">⊞ Show QR Code</button>
-          <button class="admin-btn cyan"    onclick="printSharedQR()" id="printSharedBtn" style="display:none">🖨 Print</button>
+          <button class="admin-btn primary" onclick="generateQRs()">⊞ Generate QR Codes</button>
+          <button class="admin-btn cyan"    onclick="printBothQRs()" id="printBtn" style="display:none">🖨 Print Both</button>
           <button class="admin-btn ghost"   onclick="closeAdmin()">✕ Close</button>
         </div>
-        <div id="sharedQrWrap" style="display:flex;justify-content:center;margin-top:16px"></div>
+
+        <div class="qr-display" id="qrDisplay"></div>
       </div>
     </div>
   </div>
 
 <script>
-  const STORAGE_KEY = 'meeting_attendance_v1';
-  let countdown;
+  // ─── Helpers ───────────────────────────────────────────────────────────────
+  const STORAGE_KEY = 'excel_attendance_v2';
+  let countdown, selectedName = null, currentAction = null;
 
-  function loadRecords() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
-  }
+  function loadRecords() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); } catch { return []; } }
   function saveRecords(r) { localStorage.setItem(STORAGE_KEY, JSON.stringify(r)); }
-  function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-  function initials(name) {
-    return name.trim().split(/\s+/).map(w=>w[0].toUpperCase()).slice(0,2).join('');
-  }
-  function baseUrl() { return location.origin + location.pathname; }
-  function isLocalFile() { return location.protocol === 'file:' || location.protocol === 'blob:'; }
+  function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function initials(n) { return n.trim().split(/\s+/).map(w=>w[0].toUpperCase()).slice(0,2).join(''); }
+  function baseUrl()   { return location.origin + location.pathname; }
+  function isLocal()   { return location.protocol==='file:'||location.protocol==='blob:'; }
+  function fmt12(hhmm) { const [h,m]=hhmm.split(':').map(Number); return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`; }
 
-  // ── Personal QR param ──
-  const params     = new URLSearchParams(location.search);
-  const lockedName = params.get('name') ? params.get('name').trim() : null;
+  // ─── Parse URL ─────────────────────────────────────────────────────────────
+  const params    = new URLSearchParams(location.search);
+  const urlAction = params.get('action') || 'signin';   // 'signin' | 'signout'
+  const soFrom    = params.get('from')   || null;
+  const soTo      = params.get('to')     || null;
+  // Names list encoded as base64 in URL
+  const namesB64  = params.get('names')  || null;
+  let rosterNames = [];
+  if (namesB64) {
+    try { rosterNames = JSON.parse(atob(namesB64)); } catch {}
+  }
 
+  // ─── Init ──────────────────────────────────────────────────────────────────
   window.addEventListener('DOMContentLoaded', () => {
-    const inp = document.getElementById('nameInput');
-    if (lockedName) {
-      inp.value = lockedName;
-      inp.disabled = true;
-      document.getElementById('badgeName').textContent     = lockedName;
-      document.getElementById('avatarInitials').textContent = initials(lockedName);
-      document.getElementById('personalBadge').style.display = 'flex';
+    if (urlAction === 'signout') {
+      initSignOutMode();
+    } else {
+      initSignInMode();
     }
   });
 
-  // ── Submit ──
-  function doSubmit(action) {
-    const inp  = document.getElementById('nameInput');
-    const name = inp.value.trim();
-    if (!name) {
-      inp.style.borderColor = '#ef4444';
-      setTimeout(() => inp.style.borderColor = '', 1200);
+  function initSignInMode() {
+    currentAction = 'Sign In';
+    setupModeStrip('signin');
+    setupActionBtn('signin');
+    buildNameList();
+  }
+
+  function initSignOutMode() {
+    // Time check
+    if (soFrom && soTo) {
+      const now    = new Date();
+      const [fh,fm]= soFrom.split(':').map(Number);
+      const [th,tm]= soTo.split(':').map(Number);
+      const nowMin = now.getHours()*60 + now.getMinutes();
+      if (nowMin < fh*60+fm) {
+        document.getElementById('formView').style.display   = 'none';
+        document.getElementById('viewTooEarly').style.display = 'block';
+        document.getElementById('tooEarlyInfo').textContent =
+          `Sign-out opens at ${fmt12(soFrom)} and closes at ${fmt12(soTo)}`;
+        return;
+      }
+      if (nowMin >= th*60+tm) {
+        document.getElementById('formView').style.display  = 'none';
+        document.getElementById('viewExpired').style.display = 'block';
+        return;
+      }
+      // Show countdown
+      const cd = document.getElementById('windowCountdown');
+      cd.style.display = 'block';
+      cd.textContent = `⏱ Sign-out window closes at ${fmt12(soTo)}`;
+    }
+    currentAction = 'Sign Out';
+    setupModeStrip('signout');
+    setupActionBtn('signout');
+    buildNameList();
+  }
+
+  function setupModeStrip(mode) {
+    const strip = document.getElementById('modeStrip');
+    strip.style.display = 'flex';
+    strip.className = `mode-strip ${mode}`;
+    const isOut = mode === 'signout';
+    strip.innerHTML = `
+      <div class="mode-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          ${isOut
+            ? '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'
+            : '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>'}
+        </svg>
+      </div>
+      <div class="mode-text">
+        <strong>${isOut ? 'Sign Out' : 'Sign In'}</strong>
+        <span>${isOut ? 'Select your name to sign out' : 'Select your name to sign in'}</span>
+      </div>`;
+  }
+
+  function setupActionBtn(mode) {
+    const btn   = document.getElementById('actionBtn');
+    const label = document.getElementById('actionBtnLabel');
+    const icon  = document.getElementById('actionBtnIcon');
+    btn.className = `btn btn-${mode === 'signout' ? 'out' : 'in'}`;
+    label.textContent = 'Select your name first';
+    icon.innerHTML = mode === 'signout'
+      ? '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'
+      : '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>';
+  }
+
+  // ─── Name list ─────────────────────────────────────────────────────────────
+  function buildNameList(filter) {
+    const list = document.getElementById('nameList');
+    const f    = (filter||'').toLowerCase().trim();
+    const shown = f ? rosterNames.filter(n=>n.toLowerCase().includes(f)) : rosterNames;
+
+    if (!rosterNames.length) {
+      list.innerHTML = '<div class="no-results">No roster loaded. Ask your admin to generate a new QR.</div>';
       return;
     }
+    if (!shown.length) {
+      list.innerHTML = '<div class="no-results">No matching names.</div>';
+      return;
+    }
+    list.innerHTML = shown.map(name => `
+      <div class="name-item${name===selectedName?' selected':''}" onclick="selectName('${escHtml(name)}')">
+        <div class="av">${initials(name)}</div>
+        ${escHtml(name)}
+      </div>`).join('');
+  }
+
+  function selectName(name) {
+    selectedName = name;
+    const btn   = document.getElementById('actionBtn');
+    const label = document.getElementById('actionBtnLabel');
+    btn.disabled = false;
+    label.textContent = currentAction === 'Sign In' ? `Sign In as ${name.split(' ')[0]}` : `Sign Out as ${name.split(' ')[0]}`;
+    buildNameList(document.getElementById('searchInput').value);
+    // Scroll selected item into view
+    document.querySelector('.name-item.selected')?.scrollIntoView({block:'nearest'});
+  }
+
+  document.getElementById('searchInput').addEventListener('input', function() {
+    buildNameList(this.value);
+  });
+
+  // ─── Submit ────────────────────────────────────────────────────────────────
+  function doSubmit() {
+    if (!selectedName) return;
     const now   = new Date();
-    const entry = {
-      name, action,
-      locked: !!lockedName,
+    saveRecords([...loadRecords(), {
+      name: selectedName,
+      action: currentAction,
       timestamp: now.toISOString(),
       date: now.toLocaleDateString(),
-      time: now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }),
-    };
-    const records = loadRecords();
-    records.push(entry);
-    saveRecords(records);
-    showSuccess(name, action);
+      time: now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}),
+    }]);
+    showSuccess(selectedName, currentAction);
   }
 
-  // ── Success ──
+  // ─── Success ───────────────────────────────────────────────────────────────
   function showSuccess(name, action) {
-    const color = action === 'Sign In' ? '#1a7f37' : '#b91c1c';
-    const tick  = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
-
+    const color = action==='Sign In' ? '#1a7f37' : '#b91c1c';
     document.getElementById('formView').style.display = 'none';
     document.getElementById('success').style.display  = 'block';
-
     const circle = document.getElementById('successCircle');
     circle.style.background = color;
-    circle.innerHTML = tick;
-
-    document.getElementById('successMsg').textContent = action === 'Sign In'
-      ? `Welcome, ${name.split(' ')[0]}!`
-      : `See you, ${name.split(' ')[0]}!`;
-    document.getElementById('successSub').textContent =
-      `${action} recorded at ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
-
-    let secs = 6;
-    clearInterval(countdown);
-    updateTimer(secs);
-    countdown = setInterval(() => {
-      secs--;
-      if (secs <= 0) { clearInterval(countdown); resetForm(); }
-      else updateTimer(secs);
-    }, 1000);
+    circle.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    document.getElementById('successMsg').textContent = action==='Sign In' ? `Welcome, ${name.split(' ')[0]}!` : `See you, ${name.split(' ')[0]}!`;
+    document.getElementById('successSub').textContent = `${action} recorded at ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+    let s=6; clearInterval(countdown); updateTimer(s);
+    countdown = setInterval(()=>{ if(--s<=0){clearInterval(countdown);resetForm();}else updateTimer(s); },1000);
   }
-
-  function updateTimer(s) {
-    document.getElementById('timerTxt').textContent = `Resetting in ${s}s…`;
-  }
+  function updateTimer(s) { document.getElementById('timerTxt').textContent=`Resetting in ${s}s…`; }
 
   function resetForm() {
     clearInterval(countdown);
-    const inp = document.getElementById('nameInput');
-    if (!lockedName) inp.value = '';
-    inp.style.borderColor = '';
+    selectedName = null;
+    document.getElementById('searchInput').value = '';
+    document.getElementById('actionBtn').disabled = true;
+    document.getElementById('actionBtnLabel').textContent = 'Select your name first';
     document.getElementById('success').style.display  = 'none';
     document.getElementById('formView').style.display = 'block';
-    if (!lockedName) inp.focus();
+    buildNameList();
+    document.getElementById('searchInput').focus();
   }
 
-  // ── Admin ──
+  // ─── Admin ─────────────────────────────────────────────────────────────────
   function openAdmin()  { renderTable(); document.getElementById('adminPanel').classList.add('open'); }
   function closeAdmin() { document.getElementById('adminPanel').classList.remove('open'); }
-  document.getElementById('adminPanel').addEventListener('click', function(e) {
-    if (e.target === this) closeAdmin();
-  });
+  document.getElementById('adminPanel').addEventListener('click', e => { if(e.target===document.getElementById('adminPanel')) closeAdmin(); });
 
   function switchTab(name) {
-    document.querySelectorAll('.tab-btn').forEach((b,i) =>
-      b.classList.toggle('active', ['log','staff','qr'][i] === name));
-    document.querySelectorAll('.tab-pane').forEach(p =>
-      p.classList.toggle('active', p.id === 'tab-' + name));
-    if (name === 'log') renderTable();
+    document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['log','setup'][i]===name));
+    document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
+    if(name==='log') renderTable();
+    if(name==='setup') restoreSetup();
   }
 
-  // ── Log table ──
+  function restoreSetup() {
+    const s = localStorage.getItem('meeting_staff_list'); if(s&&!document.getElementById('staffList').value) document.getElementById('staffList').value=s;
+    const sf=localStorage.getItem('meeting_so_from'); if(sf) document.getElementById('soFrom').value=sf;
+    const st=localStorage.getItem('meeting_so_to');   if(st) document.getElementById('soTo').value=st;
+    updateWindowStrip();
+  }
+
+  function updateWindowStrip() {
+    const from=document.getElementById('soFrom').value, to=document.getElementById('soTo').value;
+    const strip=document.getElementById('windowStrip');
+    if(from&&to){ strip.style.display='block'; strip.textContent=`✅ Sign-out window: ${fmt12(from)} – ${fmt12(to)}`; }
+    else strip.style.display='none';
+  }
+  document.getElementById('soFrom').addEventListener('change',updateWindowStrip);
+  document.getElementById('soTo').addEventListener('change',updateWindowStrip);
+
+  // ─── Generate QRs ──────────────────────────────────────────────────────────
+  let generatedInUrl=null, generatedOutUrl=null;
+
+  function generateQRs() {
+    const raw   = document.getElementById('staffList').value;
+    const names = raw.split('\n').map(n=>n.trim()).filter(Boolean);
+    const from  = document.getElementById('soFrom').value;
+    const to    = document.getElementById('soTo').value;
+
+    if(!names.length){ alert('Please enter at least one staff name.'); return; }
+    if(!from||!to)   { alert('Please set a sign-out time window.'); return; }
+    if(from>=to)     { alert('Opening time must be before closing time.'); return; }
+    if(isLocal())    {
+      document.getElementById('qrDisplay').innerHTML=`<div class="qr-not-hosted">⚠️ Host on GitHub Pages first — QR codes need a live URL.</div>`;
+      return;
+    }
+
+    localStorage.setItem('meeting_staff_list',raw);
+    localStorage.setItem('meeting_so_from',from);
+    localStorage.setItem('meeting_so_to',to);
+    updateWindowStrip();
+
+    const namesB64 = btoa(JSON.stringify(names));
+    generatedInUrl  = `${baseUrl()}?action=signin&names=${namesB64}`;
+    generatedOutUrl = `${baseUrl()}?action=signout&from=${from}&to=${to}&names=${namesB64}`;
+
+    const display = document.getElementById('qrDisplay');
+    display.innerHTML = `
+      <div class="qr-box in-box">
+        <div class="qr-title in">✅ Sign In</div>
+        <div id="qrIn"></div>
+        <div class="qr-note">Works any time</div>
+      </div>
+      <div class="qr-box out-box">
+        <div class="qr-title out">🚪 Sign Out</div>
+        <div id="qrOut"></div>
+        <div class="qr-note">${fmt12(from)} – ${fmt12(to)} only</div>
+      </div>`;
+
+    setTimeout(()=>{
+      new QRCode(document.getElementById('qrIn'),  {text:generatedInUrl,  width:150,height:150,colorDark:'#1a7f37',colorLight:'#f8fafc',correctLevel:QRCode.CorrectLevel.M});
+      new QRCode(document.getElementById('qrOut'), {text:generatedOutUrl, width:150,height:150,colorDark:'#b91c1c',colorLight:'#f8fafc',correctLevel:QRCode.CorrectLevel.M});
+    },50);
+
+    document.getElementById('printBtn').style.display='';
+  }
+
+  // ─── Print both QRs ────────────────────────────────────────────────────────
+  function printBothQRs() {
+    setTimeout(()=>{
+      const inEl  = document.querySelector('#qrIn canvas')  || document.querySelector('#qrIn img');
+      const outEl = document.querySelector('#qrOut canvas') || document.querySelector('#qrOut img');
+      if(!inEl||!outEl){ alert('Please generate QR codes first.'); return; }
+      const inSrc  = inEl.tagName==='CANVAS'  ? inEl.toDataURL('image/png')  : inEl.src;
+      const outSrc = outEl.tagName==='CANVAS' ? outEl.toDataURL('image/png') : outEl.src;
+      const from   = document.getElementById('soFrom').value;
+      const to     = document.getElementById('soTo').value;
+
+      const win = window.open('','_blank');
+      win.document.write(`<!DOCTYPE html><html><head>
+        <title>Excel Services — Meeting QR Codes</title>
+        <style>
+          *{box-sizing:border-box;margin:0;padding:0}
+          body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+               background:#1e1e1e;color:#fff;min-height:100vh;
+               display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;gap:32px;}
+          h1{font-size:1.6rem;letter-spacing:3px;color:#29b8d8;}
+          .sub{color:#94a3b8;font-size:.85rem;letter-spacing:1px;}
+          .pair{display:flex;gap:32px;flex-wrap:wrap;justify-content:center;}
+          .box{background:rgba(255,255,255,.05);border-radius:16px;padding:28px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:200px;}
+          .box.in {border-top:4px solid #1a7f37;}
+          .box.out{border-top:4px solid #b91c1c;}
+          img{border-radius:8px;width:180px;height:180px;}
+          .title{font-size:.9rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;}
+          .title.in{color:#4ade80;} .title.out{color:#f87171;}
+          .note{font-size:.75rem;color:#94a3b8;}
+          .instructions{background:rgba(255,255,255,.05);border-radius:12px;padding:20px 24px;max-width:500px;text-align:center;font-size:.82rem;color:#94a3b8;line-height:1.7;}
+          .instructions strong{color:#fff;display:block;margin-bottom:6px;}
+          @media print{
+            body{background:#fff;color:#1a1a1a;padding:20px;}
+            h1{color:#3c3b3b;} .sub{color:#64748b;}
+            .box{background:#f8fafc;border:1.5px solid #e2e8f0;}
+            .title.in{color:#1a7f37;} .title.out{color:#b91c1c;}
+            .note{color:#64748b;} .instructions{background:#f1f5f9;color:#64748b;}
+            .instructions strong{color:#1a1a1a;}
+          }
+        </style></head><body>
+        <h1>EXCEL SERVICES</h1>
+        <div class="sub">QUARTERLY MEETING — ATTENDANCE</div>
+        <div class="pair">
+          <div class="box in">
+            <div class="title in">✅ Sign In</div>
+            <img src="${inSrc}" />
+            <div class="note">Scan when you arrive</div>
+          </div>
+          <div class="box out">
+            <div class="title out">🚪 Sign Out</div>
+            <img src="${outSrc}" />
+            <div class="note">Available ${fmt12(from)} – ${fmt12(to)}</div>
+          </div>
+        </div>
+        <div class="instructions">
+          <strong>How to use</strong>
+          Scan the green QR when you arrive · Scan the red QR when you leave (only works during the sign-out window) · Select your name from the list and tap the button
+        </div>
+        <script>window.onload=()=>window.print()<\/script>
+      </body></html>`);
+      win.document.close();
+    }, 100);
+  }
+
+  // ─── Log table ─────────────────────────────────────────────────────────────
   function renderTable() {
     const records = loadRecords();
-    document.getElementById('recordCount').textContent =
-      `${records.length} record${records.length !== 1 ? 's' : ''} logged`;
-    const wrap = document.getElementById('tableWrap');
-    if (!records.length) {
-      wrap.innerHTML = '<div class="empty-state">No records yet.</div>'; return;
-    }
-    const sorted = [...records].reverse();
-    wrap.innerHTML = `
-      <table>
-        <thead><tr><th>#</th><th>Name</th><th>Action</th><th>Time</th><th>Via</th></tr></thead>
-        <tbody>
-          ${sorted.map((r,i) => `
-            <tr>
-              <td style="color:var(--muted)">${records.length - i}</td>
-              <td>${escHtml(r.name)}</td>
-              <td><span class="badge ${r.action==='Sign In'?'badge-in':'badge-out'}">${escHtml(r.action)}</span></td>
-              <td>${escHtml(r.time)}</td>
-              <td style="font-size:.78rem;color:var(--muted)">${r.locked?'🔒 Personal':'🌐 Shared'}</td>
-            </tr>`).join('')}
-        </tbody>
-      </table>`;
+    document.getElementById('recordCount').textContent=`${records.length} record${records.length!==1?'s':''} logged`;
+    const wrap=document.getElementById('tableWrap');
+    if(!records.length){ wrap.innerHTML='<div class="empty-state">No records yet.</div>'; return; }
+    wrap.innerHTML=`<table>
+      <thead><tr><th>#</th><th>Name</th><th>Action</th><th>Time</th></tr></thead>
+      <tbody>${[...records].reverse().map((r,i)=>`
+        <tr>
+          <td style="color:var(--muted)">${records.length-i}</td>
+          <td>${escHtml(r.name)}</td>
+          <td><span class="badge ${r.action==='Sign In'?'badge-in':'badge-out'}">${escHtml(r.action)}</span></td>
+          <td>${escHtml(r.time)}</td>
+        </tr>`).join('')}
+      </tbody></table>`;
   }
 
-  // ── Export CSV ──
   function exportCSV() {
-    const records = loadRecords();
-    if (!records.length) { alert('No records to export yet.'); return; }
-    const header = ['#','Name','Action','Date','Time','Via','Timestamp (ISO)'];
-    const rows   = records.map((r,i) =>
-      [i+1,`"${r.name.replace(/"/g,'""')}"`,r.action,r.date,r.time,
-       r.locked?'Personal QR':'Shared QR',r.timestamp]);
-    const csv  = [header,...rows].map(r=>r.join(',')).join('\n');
-    const blob = new Blob([csv],{type:'text/csv'});
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url;
-    a.download = `excel-services-attendance-${new Date().toISOString().slice(0,10)}.csv`;
+    const records=loadRecords();
+    if(!records.length){ alert('No records yet.'); return; }
+    const csv=[['#','Name','Action','Date','Time','Timestamp (ISO)'],
+      ...records.map((r,i)=>[i+1,`"${r.name.replace(/"/g,'""')}"`,r.action,r.date,r.time,r.timestamp])]
+      .map(r=>r.join(',')).join('\n');
+    const a=Object.assign(document.createElement('a'),{
+      href:URL.createObjectURL(new Blob([csv],{type:'text/csv'})),
+      download:`excel-services-attendance-${new Date().toISOString().slice(0,10)}.csv`
+    });
     a.click();
-    URL.revokeObjectURL(url);
   }
 
-  // ── Clear ──
   function clearData() {
-    if (!confirm(`Delete ALL ${loadRecords().length} record(s)? This cannot be undone.`)) return;
-    localStorage.removeItem(STORAGE_KEY);
-    renderTable();
+    if(!confirm(`Delete ALL ${loadRecords().length} record(s)? This cannot be undone.`)) return;
+    localStorage.removeItem(STORAGE_KEY); renderTable();
   }
 
-  // ── Staff QR generation ──
-  function generateStaffQRs() {
-    const raw   = document.getElementById('staffList').value;
-    const names = raw.split('\n').map(n=>n.trim()).filter(Boolean);
-    if (!names.length) { alert('Please enter at least one name.'); return; }
-
-    const grid = document.getElementById('staffQrGrid');
-    grid.innerHTML = '';
-
-    if (isLocalFile()) {
-      grid.innerHTML = `<div class="qr-not-hosted" style="grid-column:1/-1">
-        ⚠️ Host the page on GitHub Pages first — personal QR codes need a live URL to encode.
-      </div>`;
-      return;
-    }
-
-    localStorage.setItem('meeting_staff_list', raw);
-
-    names.forEach(name => {
-      const url  = `${baseUrl()}?name=${encodeURIComponent(name)}`;
-      const item = document.createElement('div');
-      item.className = 'staff-qr-item';
-      const qrDiv = document.createElement('div');
-      item.appendChild(qrDiv);
-      const label = document.createElement('div');
-      label.className = 'sname';
-      label.textContent = name;
-      item.appendChild(label);
-      grid.appendChild(item);
-      new QRCode(qrDiv, {
-        text: url, width: 110, height: 110,
-        colorDark: '#3c3b3b', colorLight: '#f8fafc',
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    });
-    document.getElementById('printAllBtn').style.display = '';
-  }
-
-  document.querySelector('[onclick="switchTab(\'staff\')"]').addEventListener('click', () => {
-    const saved = localStorage.getItem('meeting_staff_list');
-    if (saved && !document.getElementById('staffList').value)
-      document.getElementById('staffList').value = saved;
-  });
-
-  // ── Print all personal QRs ──
-  function printAllQRs() {
-    const raw   = document.getElementById('staffList').value;
-    const names = raw.split('\n').map(n=>n.trim()).filter(Boolean);
-    const items = document.querySelectorAll('.staff-qr-item');
-    const entries = [];
-    items.forEach((item, i) => {
-      const canvas = item.querySelector('canvas');
-      const img    = item.querySelector('img');
-      const src    = canvas ? canvas.toDataURL('image/png') : (img ? img.src : '');
-      if (src && names[i]) entries.push({ name: names[i], src });
-    });
-
-    const win = window.open('', '_blank');
-    win.document.write(`<!DOCTYPE html><html><head>
-      <title>Excel Services — Staff QR Codes</title>
-      <style>
-        * { box-sizing:border-box; margin:0; padding:0; }
-        body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-               padding:24px; background:#fff; }
-        .header { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
-        .header h1 { font-size:1.2rem; color:#3c3b3b; }
-        .hint { font-size:.78rem; color:#64748b; margin-bottom:20px; }
-        .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:16px; }
-        .item { border:1.5px solid #e2e8f0; border-top:3px solid #29b8d8; border-radius:10px;
-                padding:14px 10px; text-align:center;
-                display:flex; flex-direction:column; align-items:center; gap:8px; page-break-inside:avoid; }
-        .item img { border-radius:6px; width:120px; height:120px; }
-        .item .name { font-size:.82rem; font-weight:700; color:#3c3b3b; line-height:1.3; }
-        .item .sub  { font-size:.68rem; color:#94a3b8; }
-        @media print { body { padding:8px; } .header,.hint { display:none; } }
-      </style></head><body>
-      <div class="header"><h1>Excel Services — Personal QR Codes</h1></div>
-      <p class="hint">Cut and distribute. Each QR is pre-locked to that person's name.</p>
-      <div class="grid">
-        ${entries.map(e=>`
-          <div class="item">
-            <img src="${e.src}" />
-            <div class="name">${escHtml(e.name)}</div>
-            <div class="sub">Scan to sign in / out</div>
-          </div>`).join('')}
-      </div>
-      <script>window.onload=()=>window.print()<\/script>
-      </body></html>`);
-    win.document.close();
-  }
-
-  // ── Shared QR ──
-  function renderSharedQR() {
-    const wrap = document.getElementById('sharedQrWrap');
-    wrap.innerHTML = '';
-    if (isLocalFile()) {
-      wrap.innerHTML = `<div class="qr-not-hosted">⚠️ Host on GitHub Pages first, then return here.</div>`;
-      return;
-    }
-    new QRCode(wrap, {
-      text: baseUrl(), width: 200, height: 200,
-      colorDark: '#3c3b3b', colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.M
-    });
-    document.getElementById('printSharedBtn').style.display = '';
-  }
-
-  function printSharedQR() {
-    const wrap   = document.getElementById('sharedQrWrap');
-    const canvas = wrap.querySelector('canvas');
-    const img    = wrap.querySelector('img');
-    const src    = canvas ? canvas.toDataURL('image/png') : (img ? img.src : null);
-    if (!src) return;
-    const win = window.open('', '_blank');
-    win.document.write(`<!DOCTYPE html><html><head>
-      <title>Excel Services – Meeting Attendance QR</title>
-      <style>
-        body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-               display:flex; flex-direction:column; align-items:center;
-               justify-content:center; min-height:100vh; margin:0; text-align:center; padding:32px;
-               background:#1e1e1e; color:#fff; }
-        h1 { font-size:2rem; color:#29b8d8; margin-bottom:6px; letter-spacing:2px; }
-        p  { color:#94a3b8; margin-bottom:32px; font-size:1rem; }
-        img { border-radius:12px; box-shadow:0 4px 40px rgba(41,184,216,.3); }
-        .tag { margin-top:20px; font-size:.8rem; color:#64748b; letter-spacing:1px; }
-        @media print { body { background:#fff; color:#000; padding:0; } h1 { color:#3c3b3b; } }
-      </style></head><body>
-      <h1>EXCEL SERVICES</h1>
-      <p>Quarterly Meeting — scan to sign in or out</p>
-      <img src="${src}" width="260" height="260" />
-      <div class="tag">DESIGN BUILD + MEP</div>
-      <script>window.onload=()=>window.print()<\/script>
-      </body></html>`);
-    win.document.close();
-  }
-
-  // ── Keyboard ──
-  document.getElementById('nameInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.querySelector('.btn-in').focus();
+  // ─── Keyboard ──────────────────────────────────────────────────────────────
+  document.getElementById('searchInput').addEventListener('keydown', e => {
+    if(e.key==='Enter' && selectedName) doSubmit();
   });
 </script>
 </body>
 </html>
-
