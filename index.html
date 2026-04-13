@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -96,6 +97,28 @@
     .name-item .av{width:30px;height:30px;border-radius:50%;background:var(--charcoal);color:var(--cyan);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;}
     .name-item.selected .av{background:rgba(255,255,255,.25);color:#fff;}
     .no-results{padding:20px;text-align:center;color:var(--muted);font-size:.88rem;}
+
+    /* Already-used name */
+    .name-item.used{opacity:.4;cursor:not-allowed;background:#f8fafc;}
+    .name-item.used:hover{background:#f8fafc;}
+    .name-item.used .av{background:#d1d5db;color:#9ca3af;}
+    .used-tag{margin-left:auto;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#9ca3af;background:#e5e7eb;padding:2px 7px;border-radius:20px;}
+
+    /* Confirm modal */
+    #confirmModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:400;align-items:center;justify-content:center;padding:16px;}
+    #confirmModal.open{display:flex;}
+    .confirm-card{background:#fff;border-radius:var(--radius);box-shadow:0 8px 40px rgba(0,0,0,.4);padding:28px 24px;width:100%;max-width:380px;text-align:center;}
+    .confirm-card .confirm-avatar{width:64px;height:64px;border-radius:50%;background:var(--charcoal);color:var(--cyan);display:inline-flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:700;margin-bottom:14px;}
+    .confirm-card h3{font-size:1.15rem;font-weight:700;margin-bottom:6px;}
+    .confirm-card .confirm-name{font-size:1.3rem;font-weight:900;color:var(--charcoal);margin-bottom:12px;}
+    .confirm-warning{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 12px;font-size:.78rem;color:#92400e;line-height:1.5;margin-bottom:18px;text-align:left;}
+    .confirm-warning strong{display:block;margin-bottom:2px;}
+    .confirm-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+    .confirm-btn{padding:12px;border:none;border-radius:10px;font-size:.92rem;font-weight:700;cursor:pointer;transition:opacity .15s;}
+    .confirm-btn:hover{opacity:.88;}
+    .confirm-btn.yes-in {background:linear-gradient(135deg,#1a7f37,#22a34a);color:#fff;}
+    .confirm-btn.yes-out{background:linear-gradient(135deg,#b91c1c,#dc2626);color:#fff;}
+    .confirm-btn.no     {background:#f1f5f9;color:var(--text);}
 
     /* Action button */
     .btn{width:100%;padding:16px;border:none;border-radius:12px;font-size:1.05rem;font-weight:700;cursor:pointer;transition:opacity .15s,transform .12s,box-shadow .15s;display:flex;align-items:center;justify-content:center;gap:10px;}
@@ -250,6 +273,23 @@
       <button class="reset-now" onclick="resetForm()">Done — next person</button>
     </div>
 
+  </div>
+
+  <!-- Confirm modal -->
+  <div id="confirmModal">
+    <div class="confirm-card">
+      <div class="confirm-avatar" id="confirmAvatar"></div>
+      <h3 id="confirmHeading"></h3>
+      <div class="confirm-name" id="confirmName"></div>
+      <div class="confirm-warning">
+        <strong>⚠️ Attendance is monitored</strong>
+        Signing in or out on behalf of another person is a disciplinary matter and will be investigated.
+      </div>
+      <div class="confirm-btns">
+        <button class="confirm-btn no" onclick="cancelConfirm()">That's not me</button>
+        <button class="confirm-btn" id="confirmYesBtn" onclick="confirmSubmit()">Yes, that's me</button>
+      </div>
+    </div>
   </div>
 
   <button id="adminToggle" onclick="openAdmin()">⚙ Admin</button>
@@ -412,34 +452,78 @@
   }
 
   // ─── Name list ─────────────────────────────────────────────────────────────
+  function getUsedNames() {
+    const records = loadRecords();
+    if (currentAction === 'Sign In') {
+      // Names already signed in (can't sign in twice)
+      return new Set(records.filter(r=>r.action==='Sign In').map(r=>r.name));
+    } else {
+      // For sign-out: only show names that have signed in
+      const signedIn  = new Set(records.filter(r=>r.action==='Sign In').map(r=>r.name));
+      const signedOut = new Set(records.filter(r=>r.action==='Sign Out').map(r=>r.name));
+      // "used" for sign-out = already signed out
+      return signedOut;
+    }
+  }
+
+  function getEligibleNames() {
+    // For sign-out, only show people who have signed in
+    if (currentAction === 'Sign Out') {
+      const signedIn = new Set(loadRecords().filter(r=>r.action==='Sign In').map(r=>r.name));
+      return rosterNames.filter(n => signedIn.has(n));
+    }
+    return rosterNames;
+  }
+
   function buildNameList(filter) {
-    const list = document.getElementById('nameList');
-    const f    = (filter||'').toLowerCase().trim();
-    const shown = f ? rosterNames.filter(n=>n.toLowerCase().includes(f)) : rosterNames;
+    const list    = document.getElementById('nameList');
+    const f       = (filter||'').toLowerCase().trim();
+    const usedSet = getUsedNames();
+    const eligible = getEligibleNames();
+    const pool    = f ? eligible.filter(n=>n.toLowerCase().includes(f)) : eligible;
 
     if (!rosterNames.length) {
-      list.innerHTML = '<div class="no-results">No roster loaded. Ask your admin to generate a new QR.</div>';
+      list.innerHTML = '<div class="no-results">No roster loaded — ask your admin to generate a new QR.</div>';
       return;
     }
-    if (!shown.length) {
+    if (currentAction === 'Sign Out' && !eligible.length) {
+      list.innerHTML = '<div class="no-results">No sign-ins recorded yet on this device.</div>';
+      return;
+    }
+    if (!pool.length) {
       list.innerHTML = '<div class="no-results">No matching names.</div>';
       return;
     }
-    list.innerHTML = shown.map(name => `
-      <div class="name-item${name===selectedName?' selected':''}" onclick="selectName('${escHtml(name)}')">
+
+    // Sort: available first, used (greyed) at bottom
+    const available = pool.filter(n => !usedSet.has(n));
+    const used      = pool.filter(n =>  usedSet.has(n));
+
+    list.innerHTML = [...available, ...used].map(name => {
+      const isUsed = usedSet.has(name);
+      const isSel  = name === selectedName;
+      const tag    = isUsed
+        ? `<span class="used-tag">${currentAction==='Sign In' ? 'Already in' : 'Already out'}</span>`
+        : '';
+      return `<div class="name-item${isSel?' selected':''}${isUsed?' used':''}"
+        ${isUsed ? '' : `onclick="selectName('${escHtml(name)}')" `}>
         <div class="av">${initials(name)}</div>
-        ${escHtml(name)}
-      </div>`).join('');
+        ${escHtml(name)}${tag}
+      </div>`;
+    }).join('');
   }
 
   function selectName(name) {
+    const usedSet = getUsedNames();
+    if (usedSet.has(name)) return; // blocked
     selectedName = name;
     const btn   = document.getElementById('actionBtn');
     const label = document.getElementById('actionBtnLabel');
     btn.disabled = false;
-    label.textContent = currentAction === 'Sign In' ? `Sign In as ${name.split(' ')[0]}` : `Sign Out as ${name.split(' ')[0]}`;
+    label.textContent = currentAction === 'Sign In'
+      ? `Sign In as ${name.split(' ')[0]}`
+      : `Sign Out as ${name.split(' ')[0]}`;
     buildNameList(document.getElementById('searchInput').value);
-    // Scroll selected item into view
     document.querySelector('.name-item.selected')?.scrollIntoView({block:'nearest'});
   }
 
@@ -447,10 +531,28 @@
     buildNameList(this.value);
   });
 
-  // ─── Submit ────────────────────────────────────────────────────────────────
+  // ─── Submit — show confirm first ───────────────────────────────────────────
   function doSubmit() {
     if (!selectedName) return;
-    const now   = new Date();
+    const isOut = currentAction === 'Sign Out';
+
+    // Populate confirm modal
+    document.getElementById('confirmAvatar').textContent  = initials(selectedName);
+    document.getElementById('confirmHeading').textContent = isOut ? 'Signing out as:' : 'Signing in as:';
+    document.getElementById('confirmName').textContent    = selectedName;
+    const yesBtn = document.getElementById('confirmYesBtn');
+    yesBtn.className = `confirm-btn ${isOut ? 'yes-out' : 'yes-in'}`;
+    document.getElementById('confirmModal').classList.add('open');
+  }
+
+  function cancelConfirm() {
+    document.getElementById('confirmModal').classList.remove('open');
+  }
+
+  function confirmSubmit() {
+    document.getElementById('confirmModal').classList.remove('open');
+    if (!selectedName) return;
+    const now = new Date();
     saveRecords([...loadRecords(), {
       name: selectedName,
       action: currentAction,
@@ -484,7 +586,7 @@
     document.getElementById('actionBtnLabel').textContent = 'Select your name first';
     document.getElementById('success').style.display  = 'none';
     document.getElementById('formView').style.display = 'block';
-    buildNameList();
+    buildNameList(); // rebuilds with fresh used-name state
     document.getElementById('searchInput').focus();
   }
 
