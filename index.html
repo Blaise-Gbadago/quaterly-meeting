@@ -3,53 +3,176 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meeting Attendance</title>
+  <title>Excel Services – Meeting Attendance</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --brand:   #1f4e79;
-      --brand2:  #2e75b6;
-      --signin:  #1a7f37;
-      --signout: #b91c1c;
-      --bg:      #f0f4f8;
-      --card:    #ffffff;
-      --text:    #1a202c;
-      --muted:   #64748b;
-      --radius:  16px;
+      --charcoal:  #3c3b3b;
+      --charcoal2: #545252;
+      --cyan:      #29b8d8;
+      --cyan2:     #1a9cbd;
+      --cyan-pale: #e0f7fc;
+      --bg:        #1e1e1e;
+      --card:      #ffffff;
+      --text:      #1a202c;
+      --muted:     #64748b;
+      --radius:    16px;
+      --signin:    #1a7f37;
+      --signout:   #b91c1c;
     }
 
+    /* ── Body & background ── */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: var(--bg);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px 16px;
+      padding: 24px 16px 80px;
       color: var(--text);
+      position: relative;
+      overflow-x: hidden;
+      background: #1a1a1a;
     }
 
-    /* ── Header ── */
-    header { text-align: center; margin-bottom: 32px; }
-    header .logo {
-      width: 56px; height: 56px;
-      background: var(--brand);
-      border-radius: 14px;
-      display: inline-flex; align-items: center; justify-content: center;
-      margin-bottom: 12px;
+    /* Full-bleed photo background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        linear-gradient(
+          135deg,
+          rgba(10,10,10,.82) 0%,
+          rgba(28,40,45,.75) 50%,
+          rgba(10,10,10,.88) 100%
+        ),
+        url('bg.jpg') center / cover no-repeat;
+      z-index: 0;
     }
-    header .logo svg { width: 32px; height: 32px; }
-    header h1 { font-size: 1.6rem; font-weight: 700; color: var(--brand); }
-    header p  { color: var(--muted); margin-top: 4px; font-size: 0.95rem; }
+
+    /* Blueprint grid overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(41,184,216,.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(41,184,216,.07) 1px, transparent 1px);
+      background-size: 48px 48px;
+      z-index: 0;
+      animation: gridShift 25s linear infinite;
+    }
+
+    @keyframes gridShift {
+      0%   { background-position: 0 0, 0 0; }
+      100% { background-position: 48px 48px, 48px 48px; }
+    }
+
+    /* Glowing accent blobs */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: .22;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .blob-1 { width: 500px; height: 500px; background: var(--cyan);      top: -150px; right: -120px; }
+    .blob-2 { width: 400px; height: 400px; background: var(--charcoal2); bottom: -100px; left: -100px; }
+    .blob-3 { width: 280px; height: 280px; background: var(--cyan2);     bottom: 30%;  right: 5%; }
+
+    /* Diagonal accent strip */
+    .accent-strip {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--charcoal), var(--cyan), var(--charcoal));
+      z-index: 10;
+    }
+
+    /* Everything above bg */
+    header, .card, #adminToggle { position: relative; z-index: 1; }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .logo-wrap {
+      margin-bottom: 16px;
+    }
+    .logo-wrap img {
+      height: 70px;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 16px rgba(41,184,216,.4));
+    }
+    /* Fallback if logo.png not yet uploaded */
+    .logo-fallback {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-fallback .triangle {
+      width: 0; height: 0;
+      border-left: 22px solid transparent;
+      border-right: 22px solid transparent;
+      border-bottom: 38px solid var(--charcoal2);
+      position: relative;
+    }
+    .logo-fallback .company-name { text-align: left; }
+    .logo-fallback .company-name strong {
+      display: block; font-size: 1.6rem; font-weight: 900;
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, #fff 60%, var(--cyan));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .logo-fallback .company-name span {
+      font-size: 0.65rem; letter-spacing: 3px; color: var(--cyan);
+      text-transform: uppercase; font-weight: 600;
+    }
+
+    header h2 {
+      font-size: 1rem; font-weight: 400;
+      color: rgba(255,255,255,.55);
+      letter-spacing: 1px;
+      margin-top: 6px;
+      text-transform: uppercase;
+    }
+
+    /* ── Meeting tag ── */
+    .meeting-tag {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(41,184,216,.12);
+      border: 1px solid rgba(41,184,216,.3);
+      border-radius: 50px;
+      padding: 6px 16px;
+      font-size: 0.8rem; font-weight: 600;
+      color: var(--cyan);
+      letter-spacing: .5px;
+      margin-top: 10px;
+    }
+    .meeting-tag::before {
+      content: '';
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--cyan);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: .4; transform: scale(.7); }
+    }
 
     /* ── Card ── */
     .card {
-      background: var(--card);
+      background: rgba(255,255,255,.97);
+      backdrop-filter: blur(12px);
       border-radius: var(--radius);
-      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      box-shadow: 0 8px 40px rgba(0,0,0,.4), 0 0 0 1px rgba(41,184,216,.15);
       padding: 32px 28px;
       width: 100%; max-width: 440px;
     }
@@ -57,17 +180,16 @@
     /* ── Personal badge ── */
     .personal-badge {
       display: flex; align-items: center; gap: 10px;
-      background: #eff6ff; border: 1.5px solid #bfdbfe;
+      background: #e0f7fc; border: 1.5px solid #80deea;
       border-radius: 10px; padding: 12px 14px; margin-bottom: 20px;
     }
     .personal-badge .avatar {
       width: 38px; height: 38px; border-radius: 50%;
-      background: var(--brand); color: #fff;
+      background: var(--charcoal); color: var(--cyan);
       display: flex; align-items: center; justify-content: center;
       font-weight: 700; font-size: 1rem; flex-shrink: 0;
     }
-    .personal-badge .info { flex: 1; }
-    .personal-badge .info strong { display: block; font-size: 1rem; color: var(--brand); }
+    .personal-badge .info strong { display: block; font-size: 1rem; color: var(--charcoal); }
     .personal-badge .info span   { font-size: 0.78rem; color: var(--muted); }
 
     /* ── Form ── */
@@ -75,63 +197,59 @@
     input[type="text"] {
       width: 100%; padding: 14px 16px;
       border: 2px solid #d1d5db; border-radius: 10px;
-      font-size: 1rem; outline: none;
-      transition: border-color .2s; margin-bottom: 24px;
+      font-size: 1rem; outline: none; transition: border-color .2s; margin-bottom: 24px;
     }
-    input[type="text"]:focus  { border-color: var(--brand2); }
-    input[type="text"]:disabled {
-      background: #f8fafc; color: var(--muted);
-      border-color: #e2e8f0; cursor: not-allowed;
-    }
+    input[type="text"]:focus    { border-color: var(--cyan); }
+    input[type="text"]:disabled { background: #f8fafc; color: var(--muted); border-color: #e2e8f0; cursor: not-allowed; }
 
     .action-label { font-weight: 600; font-size: 0.9rem; margin-bottom: 12px; color: var(--text); }
-
     .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
     .btn {
       padding: 18px 12px; border: none; border-radius: 12px;
       font-size: 1.05rem; font-weight: 700; cursor: pointer;
-      transition: opacity .15s, transform .1s;
+      transition: opacity .15s, transform .12s, box-shadow .15s;
       display: flex; flex-direction: column; align-items: center; gap: 6px;
     }
-    .btn:active   { transform: scale(.97); }
+    .btn:hover  { opacity: .92; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+    .btn:active { transform: scale(.97); }
     .btn:disabled { opacity: .4; cursor: not-allowed; }
     .btn svg { width: 28px; height: 28px; }
-    .btn-in  { background: var(--signin);  color: #fff; }
-    .btn-out { background: var(--signout); color: #fff; }
+    .btn-in  { background: linear-gradient(135deg, #1a7f37, #22a34a); color: #fff; }
+    .btn-out { background: linear-gradient(135deg, #b91c1c, #dc2626); color: #fff; }
 
     /* ── Success ── */
     #success { display: none; text-align: center; padding: 8px 0 4px; }
     #success .check-circle {
       width: 72px; height: 72px; border-radius: 50%;
-      display: inline-flex; align-items: center; justify-content: center;
-      margin-bottom: 16px;
+      display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;
     }
     #success .check-circle svg { width: 40px; height: 40px; }
     #success h2 { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
     #success p  { color: var(--muted); font-size: 0.95rem; }
     #success .timer { display: inline-block; margin-top: 20px; font-size: 0.85rem; color: var(--muted); }
     #success .reset-now {
-      margin-top: 12px; display: inline-block;
-      background: none; border: 2px solid #d1d5db; border-radius: 8px;
-      padding: 8px 20px; cursor: pointer; font-size: 0.9rem; color: var(--muted);
-      transition: border-color .2s;
+      margin-top: 12px; display: inline-block; background: none;
+      border: 2px solid #d1d5db; border-radius: 8px; padding: 8px 20px;
+      cursor: pointer; font-size: 0.9rem; color: var(--muted); transition: border-color .2s;
     }
-    #success .reset-now:hover { border-color: var(--brand2); color: var(--brand2); }
+    #success .reset-now:hover { border-color: var(--cyan); color: var(--cyan2); }
 
     /* ── Admin toggle ── */
     #adminToggle {
       position: fixed; bottom: 18px; right: 18px;
-      background: var(--brand); color: #fff; border: none;
+      background: var(--charcoal); color: var(--cyan);
+      border: 1px solid rgba(41,184,216,.3);
       border-radius: 50px; padding: 10px 18px;
       font-size: 0.8rem; font-weight: 600; cursor: pointer;
-      opacity: .6; transition: opacity .2s; z-index: 100;
+      opacity: .7; transition: opacity .2s; z-index: 100;
     }
     #adminToggle:hover { opacity: 1; }
 
-    /* ── Overlay panels ── */
+    /* ── Overlays ── */
     .overlay {
       display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,.5); z-index: 200;
+      background: rgba(0,0,0,.6); z-index: 200;
       align-items: center; justify-content: center; padding: 16px;
     }
     .overlay.open { display: flex; }
@@ -139,14 +257,14 @@
     /* ── Admin card ── */
     .admin-card {
       background: var(--card); border-radius: var(--radius);
-      box-shadow: 0 8px 40px rgba(0,0,0,.2);
-      padding: 28px 24px; width: 100%; max-width: 600px;
+      box-shadow: 0 8px 40px rgba(0,0,0,.3);
+      padding: 28px 24px; width: 100%; max-width: 620px;
       max-height: 90vh; overflow-y: auto;
     }
     .admin-card h2 { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
     .admin-card .sub { color: var(--muted); font-size: 0.88rem; margin-bottom: 20px; }
 
-    /* ── Admin tabs ── */
+    /* ── Tabs ── */
     .tab-row { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
     .tab-btn {
       padding: 8px 16px; border: none; background: none;
@@ -154,21 +272,21 @@
       color: var(--muted); border-bottom: 2px solid transparent;
       margin-bottom: -2px; transition: color .15s, border-color .15s;
     }
-    .tab-btn.active { color: var(--brand); border-bottom-color: var(--brand); }
+    .tab-btn.active { color: var(--charcoal); border-bottom-color: var(--cyan); }
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
 
-    /* ── Buttons ── */
+    /* ── Buttons (admin) ── */
     .admin-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
     .admin-btn {
       padding: 9px 18px; border-radius: 8px; font-size: 0.88rem;
       font-weight: 600; cursor: pointer; border: none; transition: opacity .15s;
     }
     .admin-btn:hover { opacity: .85; }
-    .admin-btn.primary { background: var(--brand);  color: #fff; }
-    .admin-btn.blue    { background: #2e75b6;        color: #fff; }
-    .admin-btn.clear   { background: #fee2e2;        color: var(--signout); }
-    .admin-btn.ghost   { background: #f1f5f9;        color: var(--text); }
+    .admin-btn.primary { background: var(--charcoal); color: #fff; }
+    .admin-btn.cyan    { background: var(--cyan);     color: #fff; }
+    .admin-btn.clear   { background: #fee2e2;          color: var(--signout); }
+    .admin-btn.ghost   { background: #f1f5f9;          color: var(--text); }
 
     /* ── Log table ── */
     #recordCount { font-size: 0.85rem; color: var(--muted); margin-bottom: 14px; }
@@ -186,12 +304,11 @@
 
     /* ── Staff setup ── */
     textarea {
-      width: 100%; padding: 12px 14px;
-      border: 2px solid #d1d5db; border-radius: 10px;
-      font-size: 0.9rem; resize: vertical; min-height: 120px;
-      outline: none; font-family: inherit; line-height: 1.6;
+      width: 100%; padding: 12px 14px; border: 2px solid #d1d5db; border-radius: 10px;
+      font-size: 0.9rem; resize: vertical; min-height: 120px; outline: none;
+      font-family: inherit; line-height: 1.6;
     }
-    textarea:focus { border-color: var(--brand2); }
+    textarea:focus { border-color: var(--cyan); }
     .setup-hint { font-size: 0.8rem; color: var(--muted); margin: 8px 0 16px; }
 
     /* ── Staff QR grid ── */
@@ -204,54 +321,42 @@
       padding: 14px 10px; text-align: center;
       display: flex; flex-direction: column; align-items: center; gap: 8px;
     }
-    .staff-qr-item .sname {
-      font-size: 0.78rem; font-weight: 600; color: var(--text);
-      word-break: break-word; line-height: 1.3;
-    }
+    .staff-qr-item .sname { font-size: 0.78rem; font-weight: 600; color: var(--text); word-break: break-word; line-height: 1.3; }
     .staff-qr-item canvas, .staff-qr-item img { border-radius: 4px; }
 
-    /* ── QR modal ── */
-    .qr-card {
-      background: var(--card); border-radius: var(--radius);
-      box-shadow: 0 8px 40px rgba(0,0,0,.25);
-      padding: 36px 32px; text-align: center;
-      width: 100%; max-width: 360px;
-    }
-    .qr-card h2    { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
-    .qr-card .qsub { color: var(--muted); font-size: 0.82rem; margin-bottom: 24px; word-break: break-all; }
-    #qrBox { display: flex; justify-content: center; margin-bottom: 24px; }
-    #qrBox canvas, #qrBox img { border-radius: 8px; }
-    .qr-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-    .qr-btn { padding: 9px 18px; border-radius: 8px; font-size: 0.88rem; font-weight: 600; cursor: pointer; border: none; }
-    .qr-btn.print { background: var(--brand); color: #fff; }
-    .qr-btn.close { background: #f1f5f9; color: var(--text); }
+    /* ── QR (shared) ── */
     .qr-not-hosted {
       background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px;
       padding: 14px 16px; font-size: 0.83rem; color: #92400e; line-height: 1.5;
     }
-
-    /* ── Divider ── */
-    .divider { border: none; border-top: 1px solid #e2e8f0; margin: 20px 0; }
   </style>
 </head>
 <body>
+  <div class="accent-strip"></div>
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div class="blob blob-3"></div>
 
   <header>
-    <div class="logo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-      </svg>
+    <div class="logo-wrap">
+      <!-- Upload logo.png to your GitHub repo next to index.html -->
+      <img src="logo.png" alt="Excel Services"
+           onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='inline-flex';" />
+      <span class="logo-fallback" id="logoFallback" style="display:none">
+        <span class="triangle"></span>
+        <span class="company-name">
+          <strong>EXCEL</strong>
+          <span>Design Build + MEP</span>
+        </span>
+      </span>
     </div>
-    <h1>Quarterly Meeting</h1>
-    <p>Please sign in or out below</p>
+    <h2>Quarterly Meeting</h2>
+    <div class="meeting-tag">Attendance Check-In</div>
   </header>
 
   <div class="card">
     <div id="formView">
-      <!-- Personal badge (shown when ?name= param is present) -->
+      <!-- Personal badge -->
       <div id="personalBadge" class="personal-badge" style="display:none">
         <div class="avatar" id="avatarInitials"></div>
         <div class="info">
@@ -261,7 +366,8 @@
       </div>
 
       <label for="nameInput">Your full name</label>
-      <input type="text" id="nameInput" placeholder="e.g. Jane Smith" autocomplete="off" autocorrect="off" spellcheck="false" />
+      <input type="text" id="nameInput" placeholder="e.g. Jane Smith"
+             autocomplete="off" autocorrect="off" spellcheck="false" />
 
       <div class="action-label">What are you doing?</div>
       <div class="btn-row">
@@ -284,7 +390,7 @@
       </div>
     </div>
 
-    <!-- Success state -->
+    <!-- Success -->
     <div id="success">
       <div class="check-circle" id="successCircle"></div>
       <h2 id="successMsg"></h2>
@@ -294,14 +400,13 @@
     </div>
   </div>
 
-  <!-- Admin toggle -->
   <button id="adminToggle" onclick="openAdmin()">⚙ Admin</button>
 
   <!-- ── Admin Panel ── -->
   <div id="adminPanel" class="overlay">
     <div class="admin-card">
       <h2>Admin Panel</h2>
-      <p class="sub">Manage attendance and personal QR codes.</p>
+      <p class="sub">Excel Services — Quarterly Meeting</p>
 
       <div class="tab-row">
         <button class="tab-btn active" onclick="switchTab('log')">📋 Attendance Log</button>
@@ -309,7 +414,7 @@
         <button class="tab-btn"        onclick="switchTab('qr')">⊞ Shared QR</button>
       </div>
 
-      <!-- Tab: Log -->
+      <!-- Log -->
       <div id="tab-log" class="tab-pane active">
         <div id="recordCount"></div>
         <div class="admin-actions">
@@ -320,90 +425,70 @@
         <div id="tableWrap"></div>
       </div>
 
-      <!-- Tab: Staff QR Codes -->
+      <!-- Staff QRs -->
       <div id="tab-staff" class="tab-pane">
         <p style="font-size:.88rem;color:var(--muted);margin-bottom:12px">
-          Enter one staff name per line. Each person gets a unique QR code pre-filled with their name — only they can use it.
+          Enter one staff name per line. Each person gets a unique QR code locked to their name.
         </p>
         <label for="staffList">Staff names</label>
         <textarea id="staffList" placeholder="Jane Smith&#10;John Doe&#10;Alice Johnson&#10;Bob Williams"></textarea>
-        <p class="setup-hint">One name per line. Save this list — you can re-paste it next quarter.</p>
+        <p class="setup-hint">One name per line. Your list is saved automatically.</p>
         <div class="admin-actions">
           <button class="admin-btn primary" onclick="generateStaffQRs()">⊞ Generate QR Codes</button>
-          <button class="admin-btn blue"    onclick="printAllQRs()"     id="printAllBtn" style="display:none">🖨 Print All</button>
+          <button class="admin-btn cyan"    onclick="printAllQRs()" id="printAllBtn" style="display:none">🖨 Print All</button>
           <button class="admin-btn ghost"   onclick="closeAdmin()">✕ Close</button>
         </div>
         <div id="staffQrGrid" class="staff-qr-grid"></div>
       </div>
 
-      <!-- Tab: Shared QR -->
+      <!-- Shared QR -->
       <div id="tab-qr" class="tab-pane">
         <p style="font-size:.88rem;color:var(--muted);margin-bottom:20px">
-          This QR opens the attendance page without a locked name — useful as a backup or for walk-in guests.
+          Shared QR for the attendance page — useful for guests or as a backup.
         </p>
         <div class="admin-actions">
           <button class="admin-btn primary" onclick="renderSharedQR()">⊞ Show QR Code</button>
-          <button class="admin-btn blue"    onclick="printSharedQR()" id="printSharedBtn" style="display:none">🖨 Print</button>
+          <button class="admin-btn cyan"    onclick="printSharedQR()" id="printSharedBtn" style="display:none">🖨 Print</button>
           <button class="admin-btn ghost"   onclick="closeAdmin()">✕ Close</button>
         </div>
         <div id="sharedQrWrap" style="display:flex;justify-content:center;margin-top:16px"></div>
       </div>
-
     </div>
   </div>
 
 <script>
-  // ─────────────────────────────────────────────────────────────────────────
-  // Helpers
-  // ─────────────────────────────────────────────────────────────────────────
   const STORAGE_KEY = 'meeting_attendance_v1';
   let countdown;
 
   function loadRecords() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-    catch { return []; }
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; }
   }
   function saveRecords(r) { localStorage.setItem(STORAGE_KEY, JSON.stringify(r)); }
-
   function escHtml(s) {
-    return String(s)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
-
   function initials(name) {
-    return name.trim().split(/\s+/).map(w => w[0].toUpperCase()).slice(0,2).join('');
+    return name.trim().split(/\s+/).map(w=>w[0].toUpperCase()).slice(0,2).join('');
   }
+  function baseUrl() { return location.origin + location.pathname; }
+  function isLocalFile() { return location.protocol === 'file:' || location.protocol === 'blob:'; }
 
-  function baseUrl() {
-    return window.location.origin + window.location.pathname;
-  }
-
-  function isLocalFile() {
-    return location.protocol === 'file:' || location.protocol === 'blob:';
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Page init — read ?name= param
-  // ─────────────────────────────────────────────────────────────────────────
-  const params      = new URLSearchParams(window.location.search);
-  const lockedName  = params.get('name') ? params.get('name').trim() : null;
+  // ── Personal QR param ──
+  const params     = new URLSearchParams(location.search);
+  const lockedName = params.get('name') ? params.get('name').trim() : null;
 
   window.addEventListener('DOMContentLoaded', () => {
     const inp = document.getElementById('nameInput');
     if (lockedName) {
-      inp.value    = lockedName;
+      inp.value = lockedName;
       inp.disabled = true;
-
-      document.getElementById('badgeName').textContent    = lockedName;
+      document.getElementById('badgeName').textContent     = lockedName;
       document.getElementById('avatarInitials').textContent = initials(lockedName);
       document.getElementById('personalBadge').style.display = 'flex';
     }
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Submit
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Submit ──
   function doSubmit(action) {
     const inp  = document.getElementById('nameInput');
     const name = inp.value.trim();
@@ -415,10 +500,10 @@
     const now   = new Date();
     const entry = {
       name, action,
-      locked: !!lockedName,         // flag: came from personal QR
+      locked: !!lockedName,
       timestamp: now.toISOString(),
       date: now.toLocaleDateString(),
-      time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: now.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' }),
     };
     const records = loadRecords();
     records.push(entry);
@@ -426,9 +511,7 @@
     showSuccess(name, action);
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Success screen
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Success ──
   function showSuccess(name, action) {
     const color = action === 'Sign In' ? '#1a7f37' : '#b91c1c';
     const tick  = `<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
@@ -444,7 +527,7 @@
       ? `Welcome, ${name.split(' ')[0]}!`
       : `See you, ${name.split(' ')[0]}!`;
     document.getElementById('successSub').textContent =
-      `${action} recorded at ${new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}`;
+      `${action} recorded at ${new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}`;
 
     let secs = 6;
     clearInterval(countdown);
@@ -463,7 +546,6 @@
   function resetForm() {
     clearInterval(countdown);
     const inp = document.getElementById('nameInput');
-    // If personal QR, keep name locked; otherwise clear
     if (!lockedName) inp.value = '';
     inp.style.borderColor = '';
     document.getElementById('success').style.display  = 'none';
@@ -471,23 +553,13 @@
     if (!lockedName) inp.focus();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Admin panel
-  // ─────────────────────────────────────────────────────────────────────────
-  function openAdmin() {
-    renderTable();
-    document.getElementById('adminPanel').classList.add('open');
-  }
-  function closeAdmin() {
-    document.getElementById('adminPanel').classList.remove('open');
-  }
+  // ── Admin ──
+  function openAdmin()  { renderTable(); document.getElementById('adminPanel').classList.add('open'); }
+  function closeAdmin() { document.getElementById('adminPanel').classList.remove('open'); }
   document.getElementById('adminPanel').addEventListener('click', function(e) {
     if (e.target === this) closeAdmin();
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Tabs
-  // ─────────────────────────────────────────────────────────────────────────
   function switchTab(name) {
     document.querySelectorAll('.tab-btn').forEach((b,i) =>
       b.classList.toggle('active', ['log','staff','qr'][i] === name));
@@ -496,18 +568,14 @@
     if (name === 'log') renderTable();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Log table
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Log table ──
   function renderTable() {
     const records = loadRecords();
     document.getElementById('recordCount').textContent =
       `${records.length} record${records.length !== 1 ? 's' : ''} logged`;
-
     const wrap = document.getElementById('tableWrap');
     if (!records.length) {
-      wrap.innerHTML = '<div class="empty-state">No records yet.</div>';
-      return;
+      wrap.innerHTML = '<div class="empty-state">No records yet.</div>'; return;
     }
     const sorted = [...records].reverse();
     wrap.innerHTML = `
@@ -520,44 +588,38 @@
               <td>${escHtml(r.name)}</td>
               <td><span class="badge ${r.action==='Sign In'?'badge-in':'badge-out'}">${escHtml(r.action)}</span></td>
               <td>${escHtml(r.time)}</td>
-              <td style="font-size:.78rem;color:var(--muted)">${r.locked ? '🔒 Personal' : '🌐 Shared'}</td>
+              <td style="font-size:.78rem;color:var(--muted)">${r.locked?'🔒 Personal':'🌐 Shared'}</td>
             </tr>`).join('')}
         </tbody>
       </table>`;
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Export CSV
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Export CSV ──
   function exportCSV() {
     const records = loadRecords();
     if (!records.length) { alert('No records to export yet.'); return; }
     const header = ['#','Name','Action','Date','Time','Via','Timestamp (ISO)'];
     const rows   = records.map((r,i) =>
-      [i+1, `"${r.name.replace(/"/g,'""')}"`, r.action, r.date, r.time,
-       r.locked ? 'Personal QR' : 'Shared QR', r.timestamp]);
+      [i+1,`"${r.name.replace(/"/g,'""')}"`,r.action,r.date,r.time,
+       r.locked?'Personal QR':'Shared QR',r.timestamp]);
     const csv  = [header,...rows].map(r=>r.join(',')).join('\n');
     const blob = new Blob([csv],{type:'text/csv'});
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href = url;
-    a.download = `attendance-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `excel-services-attendance-${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Clear
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Clear ──
   function clearData() {
     if (!confirm(`Delete ALL ${loadRecords().length} record(s)? This cannot be undone.`)) return;
     localStorage.removeItem(STORAGE_KEY);
     renderTable();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Staff QR generation
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Staff QR generation ──
   function generateStaffQRs() {
     const raw   = document.getElementById('staffList').value;
     const names = raw.split('\n').map(n=>n.trim()).filter(Boolean);
@@ -568,124 +630,97 @@
 
     if (isLocalFile()) {
       grid.innerHTML = `<div class="qr-not-hosted" style="grid-column:1/-1">
-        ⚠️ The page is open as a local file — QR codes need a live URL.<br><br>
-        Host on GitHub Pages first, then return here to generate personal QR codes.
+        ⚠️ Host the page on GitHub Pages first — personal QR codes need a live URL to encode.
       </div>`;
       return;
     }
 
-    // Persist the staff list
     localStorage.setItem('meeting_staff_list', raw);
 
     names.forEach(name => {
       const url  = `${baseUrl()}?name=${encodeURIComponent(name)}`;
       const item = document.createElement('div');
       item.className = 'staff-qr-item';
-
       const qrDiv = document.createElement('div');
       item.appendChild(qrDiv);
-
       const label = document.createElement('div');
       label.className = 'sname';
       label.textContent = name;
       item.appendChild(label);
-
       grid.appendChild(item);
-
       new QRCode(qrDiv, {
-        text: url,
-        width: 110, height: 110,
-        colorDark: '#1f4e79', colorLight: '#f8fafc',
+        text: url, width: 110, height: 110,
+        colorDark: '#3c3b3b', colorLight: '#f8fafc',
         correctLevel: QRCode.CorrectLevel.M
       });
     });
-
     document.getElementById('printAllBtn').style.display = '';
   }
 
-  // Restore saved staff list on tab open
   document.querySelector('[onclick="switchTab(\'staff\')"]').addEventListener('click', () => {
     const saved = localStorage.getItem('meeting_staff_list');
-    if (saved && !document.getElementById('staffList').value) {
+    if (saved && !document.getElementById('staffList').value)
       document.getElementById('staffList').value = saved;
-    }
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Print all personal QR codes
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Print all personal QRs ──
   function printAllQRs() {
     const raw   = document.getElementById('staffList').value;
     const names = raw.split('\n').map(n=>n.trim()).filter(Boolean);
-    if (!names.length) return;
-
-    // Collect QR images from grid
-    const items   = document.querySelectorAll('.staff-qr-item');
+    const items = document.querySelectorAll('.staff-qr-item');
     const entries = [];
     items.forEach((item, i) => {
       const canvas = item.querySelector('canvas');
       const img    = item.querySelector('img');
       const src    = canvas ? canvas.toDataURL('image/png') : (img ? img.src : '');
-      const name   = names[i] || '';
-      if (src && name) entries.push({ name, src });
+      if (src && names[i]) entries.push({ name: names[i], src });
     });
 
     const win = window.open('', '_blank');
     win.document.write(`<!DOCTYPE html><html><head>
-      <title>Staff QR Codes – Quarterly Meeting</title>
+      <title>Excel Services — Staff QR Codes</title>
       <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 24px; background: #fff; }
-        h1 { font-size: 1.2rem; color: #1f4e79; margin-bottom: 4px; }
-        .hint { font-size: 0.78rem; color: #64748b; margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
-        .item {
-          border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 14px 10px;
-          text-align: center; display: flex; flex-direction: column;
-          align-items: center; gap: 8px; page-break-inside: avoid;
-        }
-        .item img { border-radius: 6px; width: 120px; height: 120px; }
-        .item .name { font-size: 0.8rem; font-weight: 600; color: #1a202c; line-height: 1.3; }
-        .item .sub  { font-size: 0.68rem; color: #94a3b8; }
-        @media print {
-          body { padding: 10px; }
-          h1, .hint { display: none; }
-        }
-      </style>
-      </head><body>
-      <h1>📋 Quarterly Meeting — Personal QR Codes</h1>
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+               padding:24px; background:#fff; }
+        .header { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+        .header h1 { font-size:1.2rem; color:#3c3b3b; }
+        .hint { font-size:.78rem; color:#64748b; margin-bottom:20px; }
+        .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:16px; }
+        .item { border:1.5px solid #e2e8f0; border-top:3px solid #29b8d8; border-radius:10px;
+                padding:14px 10px; text-align:center;
+                display:flex; flex-direction:column; align-items:center; gap:8px; page-break-inside:avoid; }
+        .item img { border-radius:6px; width:120px; height:120px; }
+        .item .name { font-size:.82rem; font-weight:700; color:#3c3b3b; line-height:1.3; }
+        .item .sub  { font-size:.68rem; color:#94a3b8; }
+        @media print { body { padding:8px; } .header,.hint { display:none; } }
+      </style></head><body>
+      <div class="header"><h1>Excel Services — Personal QR Codes</h1></div>
       <p class="hint">Cut and distribute. Each QR is pre-locked to that person's name.</p>
       <div class="grid">
-        ${entries.map(e => `
+        ${entries.map(e=>`
           <div class="item">
             <img src="${e.src}" />
             <div class="name">${escHtml(e.name)}</div>
             <div class="sub">Scan to sign in / out</div>
           </div>`).join('')}
       </div>
-      <script>window.onload = () => window.print()<\/script>
+      <script>window.onload=()=>window.print()<\/script>
       </body></html>`);
     win.document.close();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Shared QR (backup / guests)
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Shared QR ──
   function renderSharedQR() {
     const wrap = document.getElementById('sharedQrWrap');
     wrap.innerHTML = '';
-
     if (isLocalFile()) {
-      wrap.innerHTML = `<div class="qr-not-hosted">
-        ⚠️ Host on GitHub Pages first, then return here to generate the shared QR.
-      </div>`;
+      wrap.innerHTML = `<div class="qr-not-hosted">⚠️ Host on GitHub Pages first, then return here.</div>`;
       return;
     }
-
-    const url = baseUrl();
     new QRCode(wrap, {
-      text: url, width: 200, height: 200,
-      colorDark: '#1f4e79', colorLight: '#ffffff',
+      text: baseUrl(), width: 200, height: 200,
+      colorDark: '#3c3b3b', colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.M
     });
     document.getElementById('printSharedBtn').style.display = '';
@@ -697,31 +732,30 @@
     const img    = wrap.querySelector('img');
     const src    = canvas ? canvas.toDataURL('image/png') : (img ? img.src : null);
     if (!src) return;
-
     const win = window.open('', '_blank');
     win.document.write(`<!DOCTYPE html><html><head>
-      <title>Meeting Attendance QR</title>
+      <title>Excel Services – Meeting Attendance QR</title>
       <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
                display:flex; flex-direction:column; align-items:center;
-               justify-content:center; min-height:100vh; margin:0; text-align:center; padding: 32px; }
-        h1 { font-size: 2rem; color: #1f4e79; margin-bottom: 8px; }
-        p  { color: #64748b; margin-bottom: 32px; font-size: 1.1rem; }
-        img { border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,.1); }
-        @media print { body { padding: 0; } }
-      </style>
-      </head><body>
-      <h1>📋 Quarterly Meeting</h1>
-      <p>Scan to sign in or sign out</p>
+               justify-content:center; min-height:100vh; margin:0; text-align:center; padding:32px;
+               background:#1e1e1e; color:#fff; }
+        h1 { font-size:2rem; color:#29b8d8; margin-bottom:6px; letter-spacing:2px; }
+        p  { color:#94a3b8; margin-bottom:32px; font-size:1rem; }
+        img { border-radius:12px; box-shadow:0 4px 40px rgba(41,184,216,.3); }
+        .tag { margin-top:20px; font-size:.8rem; color:#64748b; letter-spacing:1px; }
+        @media print { body { background:#fff; color:#000; padding:0; } h1 { color:#3c3b3b; } }
+      </style></head><body>
+      <h1>EXCEL SERVICES</h1>
+      <p>Quarterly Meeting — scan to sign in or out</p>
       <img src="${src}" width="260" height="260" />
-      <script>window.onload = () => window.print()<\/script>
+      <div class="tag">DESIGN BUILD + MEP</div>
+      <script>window.onload=()=>window.print()<\/script>
       </body></html>`);
     win.document.close();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Keyboard shortcut
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── Keyboard ──
   document.getElementById('nameInput').addEventListener('keydown', e => {
     if (e.key === 'Enter') document.querySelector('.btn-in').focus();
   });
